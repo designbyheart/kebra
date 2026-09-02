@@ -11,11 +11,20 @@
   /* One typeface everywhere: mono utilities resolve to the same sans stack. */
   --font-mono: "Urbanist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-heading: var(--font-sans);
-  /* Minimum type size is 14px: text-xs is remapped to the sm scale. */
+  /* Type scale: xs 14px (smallest, captions/meta), sm = base 16px (default UI text),
+     lg 18px (section and card titles), xl 20px (page titles), 2xl 24px. */
   --text-xs: 0.875rem;
   --text-xs--line-height: 1.25rem;
-  --text-sm: 0.9375rem;
-  --text-sm--line-height: 1.375rem;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -140,8 +149,19 @@
     font-size: 0.875rem;
     line-height: 1.25rem;
   }
-  .text-sm {
-    font-size: 0.9375rem;
-    line-height: 1.375rem;
+  .text-sm,
+  .text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  /* Titles never drop below 18px; page titles are 20px+. Utilities may go larger, not smaller. */
+  h1 {
+    font-size: max(1.25rem, 1em);
+    line-height: 1.75rem;
+  }
+  h2,
+  h3 {
+    font-size: max(1.125rem, 1em);
+    line-height: 1.625rem;
   }
 }
