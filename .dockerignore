@@ -1,0 +1,12 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+front-desk-assignment
+docs
+*.log
+*.dump
+.DS_Store
+coverage
