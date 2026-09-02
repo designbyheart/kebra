@@ -96,7 +96,7 @@ export async function requestCancellation(input: RequestCancellationInput, who: 
           change_request_id: id,
           job_id: job.id,
           status: "pending",
-          speech_hint: "I've sent the cancellation to the office and they'll confirm it shortly. Is there anything else I can help with?",
+          speech_hint: "I've passed your cancellation request to the office. Nothing is canceled yet, they'll review it and confirm with you shortly. Anything else I can help with?",
         },
         event: {
           actor: who.actor,
