@@ -8,6 +8,13 @@
       "when": 1788362096673,
       "tag": "0000_silent_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788362919420,
+      "tag": "0001_faithful_whiplash",
+      "breakpoints": true
     }
   ]
 }

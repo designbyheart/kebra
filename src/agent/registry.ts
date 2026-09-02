@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { formatDateTimeET, BUSINESS_TZ } from "@/lib/time";
+import { tools as lookupTools } from "@/agent/tools/lookup";
+import { tools as scheduleTools } from "@/agent/tools/schedule";
+import { tools as knowledgeTools } from "@/agent/tools/knowledge";
+import { tools as webTools } from "@/agent/tools/web";
 
 export type ToolContext = {
   /** Vapi call id when invoked from a live call; null from the UI / tests. */
@@ -25,7 +29,12 @@ export function defineTool<I extends z.ZodTypeAny, O>(def: ToolDef<I, O>): ToolD
  * here, exposed at POST /api/agent/tools/<name>. The office UI calls the same
  * domain functions these handlers wrap. Wave 1 agents add entries below.
  */
+
 export const registry: Record<string, ToolDef> = {
+  ...lookupTools,
+  ...scheduleTools,
+  ...knowledgeTools,
+  ...webTools,
   ping: defineTool({
     description: "Health probe. Returns the current server time in Eastern Time.",
     input: z.object({ echo: z.string().max(200).optional() }).default({}),

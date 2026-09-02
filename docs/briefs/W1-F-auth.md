@@ -25,3 +25,11 @@
 ## Acceptance
 - Tests: hash/verify, session sign/verify/expiry, middleware allow/deny matrix (including that `/api/agent/tools/ping` without a session but with the right secret returns 200 and without the secret returns 401).
 - Manual: log in as grader, see Today; log out; hitting `/calls` redirects to `/login?next=/calls`.
+
+## Addendum (coordinator, after W0)
+- **Do not commit or push.** Work in the shared tree; the coordinator reviews and commits. Stay strictly inside the files you own.
+- **Schema is already extended** (migration `0001`): `addresses.house_number`, `addresses.street_name`, `jobs.service_type`, `change_requests.previous_status`, tables `idempotency_keys` and `dossier_batches`. Do not run `db:generate`; if you truly need another column, stop and report it.
+- **Register tools in your unit's module**, not in `registry.ts`: `src/agent/tools/lookup.ts` (W1-A), `schedule.ts` (W1-B), `knowledge.ts` (W1-C), `web.ts` (W1-E). Export `tools: Record<string, ToolDef>` using `defineTool` from `@/agent/registry`; the registry already spreads these maps.
+- **Errors and speech:** throw `ToolError` from `src/agent/errors.ts` for expected failures; include `speech_hint` in your result object (the dispatcher hoists it). See `docs/TOOLS.md` "Handler convention".
+- **Facts from W0:** Next 16 (route `params` are Promises), zod v4, `db` from `@/db` is lazy, `emitEvent` in `src/lib/events.ts` takes `{ actor: "agent"|"office"|"system", actorId?, type, entityType, entityId?, payload, callId? }` and callers put `actor_label` and `summary` in `payload`.
+- Local Postgres is shared with other units running in parallel: never truncate tables you don't own; W1-A is the only unit allowed to reload imported tables, and it runs first.

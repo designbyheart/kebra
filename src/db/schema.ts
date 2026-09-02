@@ -94,6 +94,9 @@ export const addresses = pgTable(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     normalizedStreet: text("normalized_street"),
+    // Parsed at import (W1-A) for exact-number boosting in find_address.
+    houseNumber: integer("house_number"),
+    streetName: text("street_name"),
     // street + unit + city + zip, lowercased; GIN trigram index added by
     // hand in the migration (drizzle-kit does not emit gin_trgm_ops).
     searchText: text("search_text").notNull().default(""),
@@ -139,6 +142,8 @@ export const jobs = pgTable(
     addressId: text("address_id").references(() => addresses.id),
     source: jobSourceEnum("source").notNull().default("import"),
     priority: jobPriorityEnum("priority").notNull().default("normal"),
+    // service_types.id for platform-created jobs; null for imported rows.
+    serviceType: text("service_type"),
     createdAt: createdAt(),
     updatedAt: ts("updated_at").notNull().defaultNow(),
     canceledAt: ts("canceled_at"),
@@ -363,6 +368,8 @@ export const changeRequests = pgTable(
     kind: changeRequestKindEnum("kind").notNull().default("cancel"),
     status: changeRequestStatusEnum("status").notNull().default("pending"),
     reason: text("reason"),
+    // work_status to restore on reject (set when the job moves to pending_cancellation)
+    previousStatus: workStatusEnum("previous_status"),
     callId: text("call_id").references(() => calls.id, { onDelete: "set null" }),
     // message index range in calls.transcript, e.g. { from: 12, to: 18 }
     transcriptRef: jsonb("transcript_ref").$type<{ from: number; to: number }>(),
@@ -499,5 +506,35 @@ export type NewEvent = typeof events.$inferInsert;
 export type Task = typeof tasks.$inferSelect;
 export type ChangeRequest = typeof changeRequests.$inferSelect;
 export type User = typeof users.$inferSelect;
+// ---------------------------------------------------------------------------
+// Platform plumbing (Wave 1)
+// ---------------------------------------------------------------------------
+
+/** Replay protection for write tools: key = Vapi tool-call id (docs/TOOLS.md). */
+export const idempotencyKeys = pgTable("idempotency_keys", {
+  key: text("key").primaryKey(),
+  tool: text("tool").notNull(),
+  result: jsonb("result").$type<Record<string, unknown>>().notNull(),
+  createdAt: createdAt(),
+});
+
+/** Claude Message Batches submitted by scripts/dossiers.ts (W1-D), for resumability. */
+export const dossierBatches = pgTable("dossier_batches", {
+  id: text("id").primaryKey(), // Anthropic batch id
+  kind: text("kind").notNull(), // address | customer
+  status: text("status").notNull().default("in_progress"),
+  requestCount: integer("request_count").notNull().default(0),
+  succeeded: integer("succeeded").notNull().default(0),
+  errored: integer("errored").notNull().default(0),
+  inputTokens: integer("input_tokens").notNull().default(0),
+  outputTokens: integer("output_tokens").notNull().default(0),
+  costCents: integer("cost_cents").notNull().default(0),
+  createdAt: createdAt(),
+  endedAt: ts("ended_at"),
+});
+
+export type IdempotencyKey = typeof idempotencyKeys.$inferSelect;
+export type DossierBatch = typeof dossierBatches.$inferSelect;
+
 export type ServiceType = typeof serviceTypes.$inferSelect;
 export type BusinessHoursRow = typeof businessHours.$inferSelect;
