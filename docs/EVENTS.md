@@ -40,6 +40,7 @@ Every mutation on the platform writes one row to `events`. The UI's live feed, t
 - `call.transfer_failed` — `{ summary, call_id, reason }`
 - `call.ended` — `{ summary, call_id, duration_s, ended_reason, outcome? }`
 - `call.analyzed` — `{ summary, call_id, outcome, promises_count, needs_review }` (W3-A)
+- `call.reviewed` — `{ summary, call_id, needs_review: boolean }` (office only, W2-C: the "Mark reviewed" toggle on `/calls/[id]`; `needs_review` is the new value)
 
 ### Customers and users
 - `customer.phone_added` — `{ summary, customer_id, phone_masked, label }`
