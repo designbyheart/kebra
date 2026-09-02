@@ -7,8 +7,8 @@
  */
 import { revalidatePath } from "next/cache";
 import { getCurrentUser, requireUser } from "@/lib/auth";
-import { resolveCancellationAs, type ResolveOutcome } from "@/components/inbox/cancellation-resolve";
-import { runAction, type ActionResult } from "@/components/jobs/action-result";
+import { resolveCancellationAs, type ResolveOutcome } from "@/app/inbox/cancellation-resolve";
+import { runAction, type ActionResult } from "@/lib/action-result";
 import { updateTask, type TaskStatus, type UpdateTaskResult } from "./update-task";
 
 const AFFECTED_PATHS = ["/inbox", "/inbox/cancellations", "/today", "/jobs"];

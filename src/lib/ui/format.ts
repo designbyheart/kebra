@@ -89,3 +89,34 @@ export function initials(name: string): string {
     .map((p) => p[0]!.toUpperCase())
     .join("");
 }
+
+/** The word alone: pluralWord(1, "job") → "job", pluralWord(3, "job") → "jobs". */
+export function pluralWord(n: number, one: string, many = `${one}s`): string {
+  if (n === 1) return one;
+  return many;
+}
+
+/** "3 matches" / "1 match" for search result headings. */
+export function matchCount(n: number): string {
+  return pluralize(n, "match", "matches");
+}
+
+/** `+19346478409` → `+1 (934) 647-8409`; anything else is returned as-is. */
+export function formatPhoneIntl(e164: string): string {
+  const d = e164.replace(/\D/g, "");
+  if (d.length === 11 && d.startsWith("1")) return `+1 (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7)}`;
+  return e164;
+}
+
+/** `+13055550142` → `(305) 555-0142`; anything else is returned as-is. */
+export function formatPhoneLocal(e164: string): string {
+  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(e164);
+  if (!m) return e164;
+  return `(${m[1]}) ${m[2]}-${m[3]}`;
+}
+
+/** Service duration for a select option: 60 → "1 h", 90 → "1.5 h", 45 → "45 min". */
+export function durationLabel(minutes: number): string {
+  if (minutes >= 60) return `${minutes / 60} h`;
+  return `${minutes} min`;
+}

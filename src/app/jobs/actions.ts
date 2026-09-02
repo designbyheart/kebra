@@ -7,7 +7,7 @@
  */
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
-import { runAction, type ActionResult } from "@/components/jobs/action-result";
+import { runAction, type ActionResult } from "@/lib/action-result";
 import { findAvailability, type Slot } from "@/domain/availability";
 import { assignJob, cancelJob, loadJobDetail, rescheduleJob, setJobStatus, WORK_STATUSES, type WorkStatus } from "@/domain/jobs";
 import { addNote } from "@/domain/notes";

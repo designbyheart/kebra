@@ -1,5 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { groupByKind, isOverdue, parseKindFilter, parseStatusFilter, sortTasks, transitionsFor } from "./inbox-grouping";
+import {
+  approversLine,
+  cancellationReviewHref,
+  cancellationsDescription,
+  groupByKind,
+  groupEmptyMessage,
+  inboxEmptyMessage,
+  inboxHref,
+  INBOX_ZERO,
+  isOverdue,
+  parseKindFilter,
+  parseStatusFilter,
+  parseTaskFocus,
+  resolutionLine,
+  sortTasks,
+  transitionsFor,
+} from "./inbox-grouping";
 
 const NOW = new Date("2026-09-02T16:00:00Z");
 const d = (iso: string | null) => (iso ? new Date(iso) : null);
@@ -51,5 +67,41 @@ describe("inbox grouping", () => {
     expect(transitionsFor("open").map((t) => t.to)).toEqual(["in_progress", "done", "dismissed"]);
     expect(transitionsFor("done").map((t) => t.to)).toEqual(["open"]);
     expect(transitionsFor("dismissed").map((t) => t.label)).toEqual(["Reopen"]);
+  });
+
+  it("builds filter links without default params", () => {
+    expect(inboxHref("open", null)).toBe("/inbox");
+    expect(inboxHref("done", null)).toBe("/inbox?status=done");
+    expect(inboxHref("open", "callback")).toBe("/inbox?kind=callback");
+    expect(inboxHref("all", "review")).toBe("/inbox?status=all&kind=review");
+    expect(cancellationReviewHref(null)).toBe("/inbox?kind=cancellation");
+    expect(cancellationReviewHref("t 1")).toBe("/inbox?kind=cancellation&task=t%201");
+  });
+
+  it("reads the task focus param", () => {
+    expect(parseTaskFocus(undefined)).toBeNull();
+    expect(parseTaskFocus("t1")).toBe("t1");
+    expect(parseTaskFocus(["t2", "t3"])).toBe("t2");
+  });
+
+  it("writes the empty-state copy", () => {
+    expect(inboxEmptyMessage("open", null)).toBe(INBOX_ZERO);
+    expect(inboxEmptyMessage("open", "callback")).toBe("No open callbacks.");
+    expect(inboxEmptyMessage("done", null)).toBe("Nothing done under tasks.");
+    expect(inboxEmptyMessage("all", "review")).toBe("No reviews.");
+    expect(groupEmptyMessage("in_progress", "handoff")).toBe("Nothing in progress under handoffs.");
+  });
+
+  it("picks the cancellations description and approver line", () => {
+    expect(cancellationsDescription(true)).toMatch(/Approve to cancel/);
+    expect(cancellationsDescription(false)).toMatch(/Only an admin/);
+    expect(approversLine(["Ana", "Bo"])).toBe("Can approve: Ana, Bo");
+    expect(approversLine([])).toBe("No admin users are set up yet.");
+  });
+
+  it("writes the resolution sentence", () => {
+    expect(resolutionLine({ status: "approved", resolvedByName: null, resolvedAt: null, resolutionNote: null, previousStatus: "scheduled" })).toBe("Approved by office");
+    const line = resolutionLine({ status: "rejected", resolvedByName: "Pat", resolvedAt: NOW, resolutionNote: "tech en route", previousStatus: "scheduled" });
+    expect(line).toMatch(/^Rejected by Pat · .+ · “tech en route” · status restored to scheduled$/);
   });
 });

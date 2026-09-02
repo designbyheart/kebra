@@ -22,9 +22,9 @@ import {
 import { SCHEDULABLE_ROLE } from "@/domain/availability";
 import { addressLabel, loadInvoices, loadTechs, windowEnd, type InvoiceWithItems, type TechRef } from "@/domain/history";
 import { parseDateET } from "@/domain/schedule";
-import type { NoteView } from "@/components/jobs/note-list";
-import { shiftIsoDate, sortDirectionFor, type JobFilters } from "@/components/jobs/job-filter-params";
-import { visibleTags } from "@/components/jobs/format";
+import type { NoteView } from "@/lib/ui/note-view";
+import { shiftIsoDate, sortDirectionFor, type JobFilters } from "@/lib/ui/job-filter-params";
+import { visibleTags } from "@/lib/ui/format";
 
 export const JOB_LIST_LIMIT = 200;
 

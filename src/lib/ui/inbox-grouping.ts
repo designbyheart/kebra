@@ -3,6 +3,7 @@
  * filter vocabulary. Unit tested in inbox-grouping.test.ts.
  */
 import type { Task } from "@/db/schema";
+import { formatDateTimeET } from "@/lib/time";
 
 export type TaskKind = Task["kind"];
 export type TaskStatus = Task["status"];
@@ -85,4 +86,82 @@ export function transitionsFor(status: TaskStatus): { to: TaskStatus; label: str
     case "dismissed":
       return [{ to: "open", label: "Reopen" }];
   }
+}
+
+// ---------------------------------------------------------------------------
+// URL helpers and copy
+// ---------------------------------------------------------------------------
+
+/** `?task=<id>` deep link: the task to highlight, if any. */
+export function parseTaskFocus(raw: string | string[] | undefined): string | null {
+  if (Array.isArray(raw)) return raw[0] ?? null;
+  return raw ?? null;
+}
+
+/** Link to /inbox with the given filters; the defaults are omitted from the query. */
+export function inboxHref(status: StatusFilter, kind: TaskKind | null): string {
+  const q = new URLSearchParams();
+  if (status !== "open") q.set("status", status);
+  if (kind) q.set("kind", kind);
+  const s = q.toString();
+  if (s) return `/inbox?${s}`;
+  return "/inbox";
+}
+
+/** Where the job page's pending-cancellation banner sends the office. */
+export function cancellationReviewHref(taskId: string | null): string {
+  if (taskId) return `/inbox?kind=cancellation&task=${encodeURIComponent(taskId)}`;
+  return "/inbox?kind=cancellation";
+}
+
+const EMPTY_PREFIX: Record<StatusFilter, string> = {
+  open: "No open",
+  in_progress: "Nothing in progress under",
+  done: "Nothing done under",
+  dismissed: "Nothing dismissed under",
+  all: "No",
+};
+
+export const INBOX_ZERO = "Inbox zero. New handoffs, callbacks and cancellation requests land here the moment the agent files them.";
+
+/** Empty state for the whole list. */
+export function inboxEmptyMessage(status: StatusFilter, kind: TaskKind | null): string {
+  if (status === "open" && !kind) return INBOX_ZERO;
+  const what = (kind && KIND_LABEL[kind].many.toLowerCase()) || "tasks";
+  return `${EMPTY_PREFIX[status]} ${what}.`;
+}
+
+/** Empty state for one kind section. */
+export function groupEmptyMessage(status: StatusFilter, kind: TaskKind): string {
+  return `${EMPTY_PREFIX[status]} ${KIND_LABEL[kind].many.toLowerCase()}.`;
+}
+
+/** Page description of /inbox/cancellations, by viewer role. */
+export function cancellationsDescription(admin: boolean): string {
+  if (admin) return "Requests the agent took on the phone. Approve to cancel the job, or reject with a note and we call the customer back.";
+  return "Requests the agent took on the phone. Only an admin or the owner can approve them.";
+}
+
+/** Who can approve, for the non-admin footer of the approval card. */
+export function approversLine(approvers: readonly string[]): string {
+  if (approvers.length) return `Can approve: ${approvers.join(", ")}`;
+  return "No admin users are set up yet.";
+}
+
+export type ResolutionFields = {
+  status: "pending" | "approved" | "rejected";
+  resolvedByName: string | null;
+  resolvedAt: Date | string | number | null;
+  resolutionNote: string | null;
+  previousStatus: string | null;
+};
+
+/** "Approved by Pat · Sep 2, 2026, 3:12 PM · “note” · status restored to scheduled" */
+export function resolutionLine(r: ResolutionFields): string {
+  const verb = (r.status === "approved" && "Approved") || "Rejected";
+  let out = `${verb} by ${r.resolvedByName ?? "office"}`;
+  if (r.resolvedAt) out += ` · ${formatDateTimeET(r.resolvedAt)}`;
+  if (r.resolutionNote) out += ` · “${r.resolutionNote}”`;
+  if (r.status === "rejected" && r.previousStatus) out += ` · status restored to ${r.previousStatus}`;
+  return out;
 }

@@ -1,5 +1,5 @@
-import { PageHeader } from "@/components/page-header";
-import { CallList } from "@/components/calls/call-list";
+import { CallList } from "@/components/organisms/call-list";
+import { ListPage } from "@/components/templates/list-page";
 import { requireUser } from "@/lib/auth";
 import { listCalls, parseFilter } from "./data";
 
@@ -16,9 +16,8 @@ export default async function CallsPage({ searchParams }: Props) {
   const initial = await listCalls({ filter, q });
 
   return (
-    <div>
-      <PageHeader title="Calls" description="Every call the agent has handled: who called, what it did, what it promised." />
+    <ListPage title="Calls" description="Every call the agent has handled: who called, what it did, what it promised.">
       <CallList key={`${filter}|${q}`} initial={initial} filter={filter} q={q} />
-    </div>
+    </ListPage>
   );
 }

@@ -1,7 +1,8 @@
 import { requireUser } from "@/lib/auth";
-import { ActivityStrip } from "@/components/activity-strip";
-import { Board } from "@/components/board/board";
-import { resolveBoardDate } from "@/components/board/layout";
+import { ActivityStrip } from "@/components/organisms/activity-strip";
+import { Board } from "@/components/organisms/board";
+import { BoardPage } from "@/components/templates/board-page";
+import { resolveBoardDate } from "@/lib/ui/board-layout";
 import { loadBoard } from "./data";
 
 export const metadata = { title: "Today" };
@@ -19,12 +20,5 @@ export default async function TodayPage({ searchParams }: { searchParams: Promis
   const board = await loadBoard(date);
   if (!board) throw new Error(`Could not load the board for ${date}`);
 
-  return (
-    <div className="flex flex-col gap-6 xl:flex-row xl:items-start">
-      <div className="min-w-0 flex-1">
-        <Board key={date} initial={board} />
-      </div>
-      <ActivityStrip className="xl:sticky xl:top-6 xl:w-80 xl:shrink-0" />
-    </div>
-  );
+  return <BoardPage main={<Board key={date} initial={board} />} aside={<ActivityStrip className="xl:sticky xl:top-6 xl:w-80 xl:shrink-0" />} />;
 }

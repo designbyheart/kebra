@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filtersToQuery, parseJobFilters, shiftIsoDate, sortDirectionFor } from "./job-filter-params";
+import { filtersToQuery, jobRangeText, parseJobFilters, shiftIsoDate, sortDirectionFor, sortOrderLabel } from "./job-filter-params";
 
 const TODAY = "2026-09-02";
 
@@ -58,5 +58,18 @@ describe("shiftIsoDate / filtersToQuery", () => {
     const f = parseJobFilters({ status: "open", tech: "pro_1" }, TODAY);
     expect(filtersToQuery(f)).toBe("?status=open&tech=pro_1");
     expect(filtersToQuery(f, { dates: "all" })).toBe("?status=open&tech=pro_1&dates=all");
+  });
+});
+
+describe("jobRangeText / sortOrderLabel", () => {
+  it("describes the active date range", () => {
+    expect(jobRangeText({ from: "2026-09-02", to: "2026-09-16" })).toBe("2026-09-02 → 2026-09-16");
+    expect(jobRangeText({ from: "2026-09-02", to: null })).toBe("from 2026-09-02");
+    expect(jobRangeText({ from: null, to: "2026-09-16" })).toBe("through 2026-09-16");
+    expect(jobRangeText({ from: null, to: null })).toBe("all dates");
+  });
+  it("labels the sort order", () => {
+    expect(sortOrderLabel("asc")).toBe("soonest first");
+    expect(sortOrderLabel("desc")).toBe("latest first");
   });
 });

@@ -1,9 +1,10 @@
-import { PageHeader } from "@/components/page-header";
-import { JobFilters } from "@/components/jobs/job-filters";
-import { JobsTable } from "@/components/jobs/jobs-table";
-import { parseJobFilters, type RawSearchParams } from "@/components/jobs/job-filter-params";
+import { JobsResultSummary } from "@/components/organisms/jobs-result-summary";
+import { JobFilters } from "@/components/organisms/job-filters";
+import { JobsTable } from "@/components/organisms/jobs-table";
+import { ListPage } from "@/components/templates/list-page";
 import { requireUser } from "@/lib/auth";
 import { isoDateET } from "@/lib/time";
+import { parseJobFilters, type RawSearchParams } from "@/lib/ui/job-filter-params";
 import { JOB_LIST_LIMIT, listJobs, listTagOptions, listTechOptions } from "./queries";
 
 export const metadata = { title: "Jobs" };
@@ -16,19 +17,11 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const filters = parseJobFilters(sp, today);
   const [list, techs, tags] = await Promise.all([listJobs(filters, today), listTechOptions(), listTagOptions()]);
 
-  const rangeText = filters.from && filters.to ? `${filters.from} → ${filters.to}` : filters.from ? `from ${filters.from}` : filters.to ? `through ${filters.to}` : "all dates";
-
   return (
-    <div className="space-y-4">
-      <PageHeader title="Jobs" description="All jobs, past and upcoming. Every change here uses the same functions the phone agent does." />
+    <ListPage stack title="Jobs" description="All jobs, past and upcoming. Every change here uses the same functions the phone agent does.">
       <JobFilters filters={filters} techs={techs} tags={tags} />
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <span>
-          Showing {Math.min(list.rows.length, JOB_LIST_LIMIT)} of {list.total} · {rangeText} · {list.direction === "asc" ? "soonest first" : "latest first"}
-        </span>
-        {list.total > JOB_LIST_LIMIT ? <span>Narrow the filters to see the rest.</span> : null}
-      </div>
+      <JobsResultSummary shown={list.rows.length} total={list.total} limit={JOB_LIST_LIMIT} filters={filters} direction={list.direction} />
       <JobsTable rows={list.rows} />
-    </div>
+    </ListPage>
   );
 }

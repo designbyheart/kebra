@@ -100,3 +100,19 @@ export function filtersToQuery(f: JobFilters, overrides: Partial<Record<"status"
   const s = qs.toString();
   return s ? `?${s}` : "";
 }
+
+/** Option labels for the Source <select> on /jobs. */
+export const JOB_SOURCE_FILTER_LABEL: Record<JobSource, string> = { import: "Imported", agent: "Agent", office: "Office" };
+
+/** "2026-09-02 → 2026-09-16" / "from …" / "through …" / "all dates" for the result summary. */
+export function jobRangeText(f: Pick<JobFilters, "from" | "to">): string {
+  if (f.from && f.to) return `${f.from} → ${f.to}`;
+  if (f.from) return `from ${f.from}`;
+  if (f.to) return `through ${f.to}`;
+  return "all dates";
+}
+
+export function sortOrderLabel(direction: "asc" | "desc"): string {
+  if (direction === "asc") return "soonest first";
+  return "latest first";
+}

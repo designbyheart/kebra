@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasSensitive, splitSensitive } from "./masked-text";
+import { hasSensitive, splitSensitive } from "./sensitive";
 
 describe("splitSensitive", () => {
   it("masks the digits of a gate code but keeps the label visible", () => {

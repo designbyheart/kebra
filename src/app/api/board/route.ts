@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { isValidDate, resolveBoardDate } from "@/components/board/layout";
+import { isValidDate, resolveBoardDate } from "@/lib/ui/board-layout";
 import { loadBoard } from "@/app/today/data";
 
 export const dynamic = "force-dynamic";

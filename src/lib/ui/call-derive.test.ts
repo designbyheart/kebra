@@ -1,15 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTimeline,
+  callDetailAside,
+  callListFooter,
+  callStatusText,
+  callTaskTone,
   callerLabel,
   deriveActions,
   describeToolCall,
+  detailPollMs,
   durationSeconds,
+  emptyCallsMessage,
+  followUpTitle,
   formatDuration,
   hasHandoff,
+  listPollMs,
   maskPhone,
+  outcomePendingText,
+  promisesEmptyMessage,
+  summaryEmptyMessage,
   type EventLike,
-} from "./derive";
+} from "./call-derive";
 
 describe("buildTimeline", () => {
   it("groups consecutive turns by the same speaker and keeps offsets", () => {
@@ -153,5 +164,55 @@ describe("presentation helpers", () => {
     expect(formatDuration(null)).toBe("—");
     expect(durationSeconds("2026-09-02T14:00:00Z", "2026-09-02T14:04:12Z")).toBe(252);
     expect(durationSeconds("2026-09-02T14:00:00Z", null, new Date("2026-09-02T14:00:30Z"))).toBe(30);
+  });
+});
+
+describe("copy helpers", () => {
+  it("callListFooter joins the pieces that apply", () => {
+    expect(callListFooter({ count: 1, live: false, sse: "connecting", refreshed: null })).toBe("1 call");
+    expect(callListFooter({ count: 3, live: true, sse: "open", refreshed: "10:42 AM" })).toBe(
+      "3 calls · live view refreshes every 2 s · event feed connected · refreshed 10:42 AM",
+    );
+    expect(callListFooter({ count: 0, live: false, sse: "closed", refreshed: null })).toBe("0 calls · event feed reconnecting");
+  });
+
+  it("callDetailAside pluralizes and only mentions an open feed", () => {
+    expect(callDetailAside({ turns: 1, toolCalls: 1, live: false, sse: "closed", refreshed: null })).toBe("1 turn · 1 tool call");
+    expect(callDetailAside({ turns: 2, toolCalls: 0, live: true, sse: "open", refreshed: "10:42 AM" })).toBe(
+      "2 turns · 0 tool calls · refreshing every 2 s · feed connected · 10:42 AM",
+    );
+  });
+
+  it("emptyCallsMessage prefers the query, then the filter", () => {
+    expect(emptyCallsMessage("frozen", "all")).toBe("No calls match “frozen”.");
+    expect(emptyCallsMessage("", "all")).toBe("No calls yet. The first call the agent takes will show up here.");
+    expect(emptyCallsMessage("", "live")).toBe("Nothing here right now.");
+  });
+
+  it("callStatusText uses the live label or the ended reason", () => {
+    expect(callStatusText({ status: "in_progress", endedReason: null }, true)).toBe("Live");
+    expect(callStatusText({ status: "ended", endedReason: "customer-ended-call" }, false)).toBe("Caller hung up");
+    expect(callStatusText({ status: "failed", endedReason: null }, false)).toBe("Failed");
+  });
+
+  it("empty-state copy depends on live / analyzed", () => {
+    expect(outcomePendingText(true)).toBe("In progress");
+    expect(outcomePendingText(false)).toBe("Pending analysis");
+    expect(promisesEmptyMessage(true, false)).toBe("Analysis runs when the call ends.");
+    expect(promisesEmptyMessage(false, true)).toBe("No promises were made on this call.");
+    expect(promisesEmptyMessage(false, false)).toBe("Analysis pending.");
+    expect(summaryEmptyMessage(true)).toBe("Written when the call ends.");
+    expect(summaryEmptyMessage(false)).toBe("Analysis pending.");
+  });
+
+  it("followUpTitle and poll cadences", () => {
+    expect(followUpTitle("Dana Reyes")).toBe("Follow up with Dana Reyes");
+    expect(followUpTitle(null)).toBe("Follow up on call");
+    expect(listPollMs(true)).toBe(2000);
+    expect(listPollMs(false)).toBe(6000);
+    expect(detailPollMs(true)).toBe(2000);
+    expect(detailPollMs(false)).toBe(10000);
+    expect(callTaskTone("open")).toContain("purple");
+    expect(callTaskTone("done")).toBe("bg-muted text-muted-foreground");
   });
 });

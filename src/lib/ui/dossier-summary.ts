@@ -1,5 +1,5 @@
 import type { AddressDossier } from "@/domain/dossier-fallback";
-import { fmtDate, money, pluralize } from "@/components/jobs/format";
+import { fmtDate, money, pluralize } from "@/lib/ui/format";
 
 /**
  * Deterministic two-or-three sentence summary for an address when W1-D's
@@ -36,4 +36,43 @@ export function fallbackAddressSummary(d: AddressDossier, now: Date = new Date()
   if (d.open_balance_cents > 0) flags.push(`Open balance ${money(d.open_balance_cents)} across ${pluralize(d.open_balance_jobs, "job")}.`);
   void now;
   return [...parts, ...flags.slice(0, 4)].join(" ");
+}
+
+/**
+ * Split a summary (LLM brief or fallback sentence) into paragraphs: blank
+ * lines or bullet lines start a new one; bullet markers are stripped.
+ */
+export function summaryParagraphs(text: string | null): string[] {
+  if (!text) return [];
+  return text
+    .split(/\n{2,}|\n(?=[-*•])/)
+    .map((p) => p.replace(/^[-*•]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+export type CustomerSummaryInput = {
+  displayName: string;
+  kind: string | null;
+  company: string | null;
+  jobCount: number;
+  firstJob: Date | string | null;
+  lastJob: Date | string | null;
+};
+
+/**
+ * Deterministic one-or-two sentence summary for a customer when no LLM
+ * brief is on file.
+ */
+export function fallbackCustomerSummary(c: CustomerSummaryInput, sitesCount: number, balance: { total_cents: number; invoiceCount: number }): string {
+  return [
+    `${c.displayName} is a ${c.kind === "business" || c.company ? "business" : "homeowner"} customer with ${pluralize(sitesCount, "service address", "service addresses")} and ${pluralize(c.jobCount, "job")} on file`,
+    c.firstJob ? `since ${fmtDate(c.firstJob)}` : null,
+    c.lastJob ? `, last on ${fmtDate(c.lastJob)}` : null,
+    ".",
+    balance.total_cents > 0 ? ` Open balance ${money(balance.total_cents)} across ${pluralize(balance.invoiceCount, "invoice")}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+,/g, ",")
+    .replace(/\s+\./g, ".");
 }

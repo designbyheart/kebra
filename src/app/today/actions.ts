@@ -16,7 +16,7 @@ import { SERVICE_TYPE_IDS, findAvailability } from "@/domain/availability";
 import type { WriteActor } from "@/domain/idempotency";
 import { WORK_STATUSES, assignJob, cancelJob, loadJobDetail, rescheduleJob, setJobStatus } from "@/domain/jobs";
 import { addNote } from "@/domain/notes";
-import type { ActionResult, JobSheetData, Slot } from "@/components/board/types";
+import type { ActionResult, JobSheetData, Slot } from "@/lib/ui/board-types";
 
 const id = z.string().trim().min(1).max(64);
 const isoInstant = z

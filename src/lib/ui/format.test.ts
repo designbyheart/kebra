@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fmtWindow, money, relativeDay, unitLabel, visibleTags } from "./format";
+import { durationLabel, fmtWindow, money, relativeDay, unitLabel, visibleTags } from "./format";
 
 const NOW = new Date("2026-09-02T16:00:00Z"); // Wed Sep 2, noon ET
 
@@ -33,5 +33,11 @@ describe("format helpers", () => {
     expect(unitLabel("Casa de Egret")).toBe("Casa de Egret");
     expect(unitLabel("Unit 36W")).toBe("Unit 36W");
     expect(unitLabel(null)).toBeNull();
+  });
+
+  it("durationLabel", () => {
+    expect(durationLabel(45)).toBe("45 min");
+    expect(durationLabel(60)).toBe("1 h");
+    expect(durationLabel(90)).toBe("1.5 h");
   });
 });

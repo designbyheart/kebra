@@ -11,7 +11,7 @@ import { loadTechs as loadFieldTechs } from "@/domain/availability";
 import { CANCELED_STATUSES, addressLabel, hasCallbackTag, loadTechs as loadJobTechs, spokenWindow, windowEnd } from "@/domain/history";
 import { getSchedule, parseDateET } from "@/domain/schedule";
 import { INSTALL_RE } from "@/domain/warranty";
-import type { BoardData, BoardJob, UnscheduledJob } from "@/components/board/types";
+import type { BoardData, BoardJob, UnscheduledJob } from "@/lib/ui/board-types";
 
 const NEEDS_SCHEDULING_CAP = 24;
 

@@ -99,3 +99,14 @@ export type Slot = {
 };
 
 export type ActionResult<T> = { ok: true; data: T } | { ok: false; error: string; code?: string };
+
+/** Run a sheet write: toast on the result, reload the sheet, tell the board. */
+export type Run = (label: string, fn: () => Promise<ActionResult<unknown>>, after?: () => void) => void;
+
+// --- client board state -----------------------------------------------------
+
+/** Why a card is highlighted after a live refresh. */
+export type Flash = "new" | "changed";
+
+/** Refetch state of the client board against /api/board. */
+export type FetchState = "idle" | "refreshing" | "error" | "signed-out";

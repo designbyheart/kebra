@@ -144,14 +144,3 @@ export function useCallFeed<T>({ initial, fetcher, intervalMs, callId = null, ev
 
   return { data, setData, refetch: () => schedule.current(0), lastRefreshAt, error, sse };
 }
-
-/** Re-render every `ms` while `active`; returns the current epoch ms. */
-export function useNow(ms: number, active = true): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!active) return;
-    const id = setInterval(() => setNow(Date.now()), ms);
-    return () => clearInterval(id);
-  }, [ms, active]);
-  return now;
-}

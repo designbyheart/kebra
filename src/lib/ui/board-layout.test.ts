@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  boardHref,
+  cardPositionStyle,
+  gridBackgroundStyle,
   hourTicks,
+  invoiceTag,
+  laneRowStyle,
+  notBeforeToday,
+  noteTimeLabel,
+  sheetEndLabel,
+  sheetWindowLabel,
+  techLine,
   isValidDate,
   nowPct,
   positionFor,
@@ -10,7 +20,7 @@ import {
   shortRange,
   stackLanes,
   todayET,
-} from "./layout";
+} from "./board-layout";
 
 // 10 AM ET on the grid: (10 - 7) / 14
 const TEN_AM_PCT = (3 / 14) * 100;
@@ -177,5 +187,34 @@ describe("labels", () => {
     expect(relativeTime("2026-09-02T13:00:00Z", now)).toBe("3h ago");
     expect(relativeTime("2026-09-01T14:00:00Z", now)).toBe("yesterday");
     expect(relativeTime("2026-08-28T14:00:00Z", now)).toBe("Aug 28");
+  });
+});
+
+describe("board labels and dynamic styles", () => {
+  it("builds card and sheet labels", () => {
+    expect(invoiceTag("1234")).toBe("#1234");
+    expect(invoiceTag(null)).toBe("");
+    expect(techLine(["Ana", "Ben"])).toBe("Tech: Ana, Ben");
+    expect(techLine([])).toBe("Unassigned");
+    expect(sheetWindowLabel(null, null)).toBe("Not scheduled");
+    expect(sheetWindowLabel("2026-09-02T14:00:00Z", null)).toBe("Wed Sep 2, 10:00 AM–12:00 PM");
+    expect(sheetWindowLabel("2026-09-02T14:00:00Z", 60)).toBe("Wed Sep 2, 10:00–11:00 AM");
+    expect(sheetEndLabel("2026-09-02T16:00:00Z")).toBe("12:00 PM EDT");
+    expect(noteTimeLabel("2026-09-02T16:00:00Z")).toBe("Wed Sep 2, 2026 12:00 PM");
+  });
+
+  it("links to /today for today and clamps the reschedule start", () => {
+    const now = new Date("2026-09-02T16:00:00Z");
+    expect(boardHref("2026-09-02", now)).toBe("/today");
+    expect(boardHref("2026-09-03", now)).toBe("/today?date=2026-09-03");
+    expect(notBeforeToday("2026-08-30", now)).toBe("2026-09-02");
+    expect(notBeforeToday("2026-09-05", now)).toBe("2026-09-05");
+  });
+
+  it("computes the only styles that cannot be classes", () => {
+    expect(cardPositionStyle({ leftPct: 21.43, widthPct: 14.29, clipped: false, outside: false }, 1)).toEqual({ left: "21.43%", width: "14.29%", top: 120, height: 108 });
+    expect(laneRowStyle(2, false)).toMatchObject({ height: 232 });
+    expect(laneRowStyle(1, true)).toMatchObject({ height: 40 });
+    expect(gridBackgroundStyle().backgroundSize).toBe(`${100 / 14}% 100%`);
   });
 });

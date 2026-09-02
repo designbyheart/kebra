@@ -7,7 +7,7 @@ import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { changeRequests, customers, events, jobs, tasks, users, type Task } from "@/db/schema";
 import type { WorkStatus } from "@/domain/jobs";
-import type { StatusFilter, TaskKind } from "@/components/inbox/inbox-grouping";
+import type { StatusFilter, TaskKind } from "@/lib/ui/inbox-grouping";
 
 export type InboxTask = {
   id: string;

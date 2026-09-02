@@ -2,8 +2,7 @@
  * Status vocabulary for the board: one colour per work status (brief W2-B),
  * one accent for the agent. Keep this the single place that knows colours.
  */
-import type { CSSProperties } from "react";
-import type { JobPriority, WorkStatus } from "./types";
+import type { JobPriority, Slot, WorkStatus } from "./board-types";
 
 export type StatusStyle = {
   label: string;
@@ -15,13 +14,17 @@ export type StatusStyle = {
   /** Small dot / chip. */
   dot: string;
   chip: string;
-  style?: CSSProperties;
+  /** Extra background-image class (pending cancellation stripes). */
+  stripes?: string;
 };
 
-const STRIPES: CSSProperties = {
-  backgroundImage:
-    "repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in oklch, var(--color-red-500) 14%, transparent) 6px 12px)",
-};
+/** Diagonal red stripes layered over the card / chip colour. */
+export const PENDING_STRIPES =
+  "bg-[repeating-linear-gradient(135deg,transparent_0_6px,color-mix(in_oklch,var(--color-red-500)_14%,transparent)_6px_12px)]";
+
+/** Wider stripes for the pending-cancellation banner inside the job sheet. */
+export const PENDING_BANNER_STRIPES =
+  "bg-[repeating-linear-gradient(135deg,transparent_0_8px,color-mix(in_oklch,var(--color-red-500)_10%,transparent)_8px_16px)]";
 
 export const STATUS_STYLE: Record<WorkStatus, StatusStyle> = {
   scheduled: {
@@ -87,7 +90,7 @@ export const STATUS_STYLE: Record<WorkStatus, StatusStyle> = {
     bar: "bg-red-500",
     dot: "bg-red-500",
     chip: "bg-red-100 text-red-900 dark:bg-red-900/60 dark:text-red-100",
-    style: STRIPES,
+    stripes: PENDING_STRIPES,
   },
 };
 
@@ -109,6 +112,11 @@ export const OFFICE_SETTABLE: readonly WorkStatus[] = [
   "needs scheduling",
 ];
 
+/** Options for the sheet's status select: the office list, with the current status first when it is not on it. */
+export function statusOptionsFor(status: WorkStatus): readonly WorkStatus[] {
+  return OFFICE_SETTABLE.includes(status) ? OFFICE_SETTABLE : [status, ...OFFICE_SETTABLE];
+}
+
 export const PRIORITY_STYLE: Record<JobPriority, { label: string; text: string; show: boolean }> = {
   normal: { label: "Normal", text: "text-muted-foreground", show: false },
   high: { label: "High priority", text: "text-orange-600 dark:text-orange-400", show: true },
@@ -123,4 +131,11 @@ export const NOTE_AUTHOR_LABEL: Record<string, string> = {
   office: "Office",
   agent: "Agent",
   system: "System",
+};
+
+/** Suffix after the tech name on an open-window button in the sheet. */
+export const SLOT_REASON_SUFFIX: Record<Slot["reason"], string> = {
+  last_tech_here: " · was here last",
+  least_loaded: " · lightest day",
+  only_available: "",
 };

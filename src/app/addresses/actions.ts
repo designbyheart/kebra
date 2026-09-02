@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { isoDateET } from "@/lib/time";
 import { SERVICE_TYPE_IDS, findAvailability, type Slot } from "@/domain/availability";
 import { bookJob, type BookJobResult } from "@/domain/jobs";
-import { runAction, toActionError, type ActionResult } from "@/components/jobs/action-result";
+import { runAction, toActionError, type ActionResult } from "@/lib/action-result";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 

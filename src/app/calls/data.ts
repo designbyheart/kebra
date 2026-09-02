@@ -3,7 +3,7 @@ import { startOfDay } from "date-fns";
 import { db } from "@/db";
 import { addresses, calls, customers, events, tasks, type Promise_, type ToolCallRecord, type TranscriptTurn } from "@/db/schema";
 import { fromET, nowET } from "@/lib/time";
-import { callerLabel, deriveActions, hasHandoff, type ActionItem, type EventLike } from "@/components/calls/derive";
+import { callerLabel, deriveActions, hasHandoff, type ActionItem, type EventLike } from "@/lib/ui/call-derive";
 
 /**
  * Read side of the Calls pages (W2-C). Reads `calls`, `events`, `tasks`

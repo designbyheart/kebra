@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { describe, expect, it } from "vitest";
-import { parseJobFilters } from "@/components/jobs/job-filter-params";
+import { parseJobFilters } from "@/lib/ui/job-filter-params";
 import { listJobs, listTagOptions, listTechOptions, loadJobPage, resolveJobId } from "./queries";
 
 const TODAY = "2026-09-02";

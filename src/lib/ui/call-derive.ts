@@ -335,3 +335,97 @@ export function endedReasonLabel(reason: string | null | undefined): string | nu
   };
   return map[reason] ?? reason.replace(/[-_]/g, " ");
 }
+
+// ---------------------------------------------------------------------------
+// Copy + class helpers for the Calls components (no ternaries allowed there)
+// ---------------------------------------------------------------------------
+
+export type FeedState = "connecting" | "open" | "closed";
+
+/** Refresh cadence for the list: fast while any call is live. */
+export function listPollMs(anyLive: boolean): number {
+  return anyLive ? 2000 : 6000;
+}
+
+/** Refresh cadence for the detail page: fast while the call is live. */
+export function detailPollMs(live: boolean): number {
+  return live ? 2000 : 10000;
+}
+
+const LIST_FEED_NOTE: Record<FeedState, string> = {
+  connecting: "",
+  open: " · event feed connected",
+  closed: " · event feed reconnecting",
+};
+
+/** "3 calls · live view refreshes every 2 s · event feed connected · refreshed 10:42 AM" */
+export function callListFooter(input: { count: number; live: boolean; sse: FeedState; refreshed: string | null }): string {
+  const calls = `${input.count} call${input.count === 1 ? "" : "s"}`;
+  const live = input.live ? " · live view refreshes every 2 s" : "";
+  const refreshed = input.refreshed ? ` · refreshed ${input.refreshed}` : "";
+  return `${calls}${live}${LIST_FEED_NOTE[input.sse]}${refreshed}`;
+}
+
+/** "12 turns · 3 tool calls · refreshing every 2 s · feed connected · 10:42 AM" */
+export function callDetailAside(input: { turns: number; toolCalls: number; live: boolean; sse: FeedState; refreshed: string | null }): string {
+  const turns = `${input.turns} turn${input.turns === 1 ? "" : "s"}`;
+  const tools = `${input.toolCalls} tool call${input.toolCalls === 1 ? "" : "s"}`;
+  const live = input.live ? " · refreshing every 2 s" : "";
+  const feed = input.sse === "open" ? " · feed connected" : "";
+  const refreshed = input.refreshed ? ` · ${input.refreshed}` : "";
+  return `${turns} · ${tools}${live}${feed}${refreshed}`;
+}
+
+/** Empty-table copy for the calls list. */
+export function emptyCallsMessage(q: string, filter: string): string {
+  if (q) return `No calls match “${q}”.`;
+  if (filter === "all") return "No calls yet. The first call the agent takes will show up here.";
+  return "Nothing here right now.";
+}
+
+/** Status line under the duration on the call page. */
+export function callStatusText(input: { status: string; endedReason: string | null }, live: boolean): string {
+  const status = STATUS_LABEL[input.status] ?? input.status;
+  if (live) return status;
+  return endedReasonLabel(input.endedReason) ?? status;
+}
+
+/** Outcome cell copy when analysis has not produced an outcome yet. */
+export function outcomePendingText(live: boolean): string {
+  return live ? "In progress" : "Pending analysis";
+}
+
+/** Empty state under "Promises made". */
+export function promisesEmptyMessage(live: boolean, analyzed: boolean): string {
+  if (live) return "Analysis runs when the call ends.";
+  if (analyzed) return "No promises were made on this call.";
+  return "Analysis pending.";
+}
+
+/** Empty state under "Summary". */
+export function summaryEmptyMessage(live: boolean): string {
+  return live ? "Written when the call ends." : "Analysis pending.";
+}
+
+/** Default title for the follow-up task dialog. */
+export function followUpTitle(customerName: string | null): string {
+  return customerName ? `Follow up with ${customerName}` : "Follow up on call";
+}
+
+/** Icon tint per action kind in "Actions taken". */
+export const ACTION_TONE: Record<ActionKind, string> = {
+  booking: "text-emerald-700 dark:text-emerald-300",
+  reschedule: "text-blue-700 dark:text-blue-300",
+  cancellation: "text-red-700 dark:text-red-300",
+  note: "text-muted-foreground",
+  task: "text-purple-700 dark:text-purple-300",
+  identified: "text-muted-foreground",
+  transfer: "text-amber-800 dark:text-amber-300",
+  phone: "text-muted-foreground",
+  other: "text-muted-foreground",
+};
+
+/** Pill classes for a task row under "Actions taken". */
+export function callTaskTone(status: string): string {
+  return status === "open" ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" : "bg-muted text-muted-foreground";
+}

@@ -2,7 +2,7 @@ import "dotenv/config";
 import { describe, expect, it } from "vitest";
 import { getAddressPage } from "./queries";
 import { searchCustomers } from "@/app/customers/queries";
-import { fallbackAddressSummary } from "@/components/customers/dossier-summary";
+import { fallbackAddressSummary } from "@/lib/ui/dossier-summary";
 
 const NOW = new Date("2026-09-02T16:00:00Z");
 const GROUPER = "adr_4840691e98d443c2b4edcae6e86ced8a";
