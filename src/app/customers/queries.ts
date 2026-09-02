@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import {
   addresses,
@@ -11,8 +11,10 @@ import {
   type Customer,
 } from "@/db/schema";
 
-type CustomerPhone = typeof customerPhones.$inferSelect;
 import { findAddress, findCustomer, type AddressCandidate } from "@/domain/search";
+
+type CustomerPhone = typeof customerPhones.$inferSelect;
+
 import {
   OPEN_STATUSES,
   addressLabel,
@@ -56,16 +58,122 @@ type RawCustomerRow = {
 
 const RECENT_LIMIT = 60;
 
-async function customerRows(ids: string[] | null): Promise<CustomerRow[]> {
+export type CustomerFilters = {
+  kinds?: string[];
+  balanceMin?: number; // cents
+  balanceMax?: number; // cents
+  jobsMin?: number;
+  jobsMax?: number;
+  sitesMin?: number;
+  sitesMax?: number;
+};
+
+export type CustomerSortColumn = "name" | "kind" | "sites" | "jobs" | "last_job" | "balance" | "match";
+export type CustomerSort = { column: CustomerSortColumn; direction: "asc" | "desc" };
+
+function validKind(kind: string): boolean {
+  return kind === "business" || kind === "homeowner";
+}
+
+function normalizedFilters(input: CustomerFilters): CustomerFilters {
+  const out: CustomerFilters = {};
+  if (input.kinds?.length) out.kinds = input.kinds.filter(validKind);
+  if (input.balanceMin !== undefined && !Number.isNaN(input.balanceMin)) out.balanceMin = Math.max(0, input.balanceMin);
+  if (input.balanceMax !== undefined && !Number.isNaN(input.balanceMax)) out.balanceMax = Math.max(0, input.balanceMax);
+  if (input.jobsMin !== undefined && !Number.isNaN(input.jobsMin)) out.jobsMin = Math.max(0, input.jobsMin);
+  if (input.jobsMax !== undefined && !Number.isNaN(input.jobsMax)) out.jobsMax = Math.max(0, input.jobsMax);
+  if (input.sitesMin !== undefined && !Number.isNaN(input.sitesMin)) out.sitesMin = Math.max(0, input.sitesMin);
+  if (input.sitesMax !== undefined && !Number.isNaN(input.sitesMax)) out.sitesMax = Math.max(0, input.sitesMax);
+  return out;
+}
+
+function rangeCondition(
+  valueColumn: SQL,
+  min: number | undefined,
+  max: number | undefined,
+): SQL | null {
+  if (min === undefined && max === undefined) return null;
+  if (min !== undefined && max !== undefined) {
+    return min <= max
+      ? sql`${valueColumn} between ${min} and ${max}`
+      : sql`${valueColumn} between ${max} and ${min}`;
+  }
+  if (min !== undefined) return sql`${valueColumn} >= ${min}`;
+  return sql`${valueColumn} <= ${max}`;
+}
+
+function buildWhere(ids: string[] | null, filters: CustomerFilters): SQL {
+  const conditions: SQL[] = [];
+  if (ids && ids.length) {
+    conditions.push(sql`c.id in ${ids}`);
+  }
+  if (filters.kinds?.length) {
+    conditions.push(sql`c.kind in ${filters.kinds}`);
+  }
+  const jobsCond = rangeCondition(sql`c.job_count`, filters.jobsMin, filters.jobsMax);
+  if (jobsCond) conditions.push(jobsCond);
+  return conditions.length ? sql`where ${sql.join(conditions, sql` and `)}` : sql``;
+}
+
+function buildOrderBy(column: CustomerSortColumn, direction: "asc" | "desc"): SQL {
+  const dir = direction === "asc" ? sql`asc` : sql`desc`;
+  switch (column) {
+    case "name":
+      return sql`display_name ${dir}`;
+    case "kind":
+      return sql`kind nulls last ${dir}, display_name asc`;
+    case "sites":
+      return sql`sites_count ${dir}, display_name asc`;
+    case "jobs":
+      return sql`job_count ${dir}, display_name asc`;
+    case "last_job":
+      return sql`last_job ${dir} nulls last, display_name asc`;
+    case "balance":
+      return sql`open_balance ${dir}, display_name asc`;
+    case "match":
+      return sql`display_name asc`;
+  }
+}
+
+function buildOuterWhere(filters: CustomerFilters): SQL {
+  const conditions: SQL[] = [];
+  const sitesCond = rangeCondition(sql`sites_count`, filters.sitesMin, filters.sitesMax);
+  if (sitesCond) conditions.push(sitesCond);
+  const balanceCond = rangeCondition(sql`open_balance`, filters.balanceMin, filters.balanceMax);
+  if (balanceCond) conditions.push(balanceCond);
+  return conditions.length ? sql`where ${sql.join(conditions, sql` and `)}` : sql``;
+}
+
+async function customerRows(
+  ids: string[] | null,
+  filters: CustomerFilters,
+  sort: CustomerSort,
+): Promise<CustomerRow[]> {
+  const where = buildWhere(ids, filters);
+  const outerWhere = buildOuterWhere(filters);
+  const orderBy = buildOrderBy(sort.column, sort.direction);
+  const limitClause = ids ? sql`` : sql`limit ${RECENT_LIMIT}`;
+
   const rows = (await db.execute(sql`
-    select c.id, c.display_name, c.kind, c.company, c.job_count, c.last_job,
-      (select count(*) from addresses a where a.customer_id = c.id) as sites_count,
-      (select coalesce(sum(j.outstanding_balance), 0) from jobs j where j.customer_id = c.id) as open_balance
-    from customers c
-    ${ids ? sql`where c.id in ${ids}` : sql``}
-    order by c.last_job desc nulls last, c.display_name
-    ${ids ? sql`` : sql`limit ${RECENT_LIMIT}`}
+    with base as (
+      select
+        c.id,
+        c.display_name,
+        c.kind,
+        c.company,
+        c.job_count,
+        c.last_job,
+        (select count(*) from addresses a where a.customer_id = c.id) as sites_count,
+        (select coalesce(sum(j.outstanding_balance), 0) from jobs j where j.customer_id = c.id) as open_balance
+      from customers c
+      ${where}
+    )
+    select * from base
+    ${outerWhere}
+    order by ${orderBy}
+    ${limitClause}
   `)) as unknown as RawCustomerRow[];
+
   return rows.map((r) => ({
     id: r.id,
     display_name: r.display_name,
@@ -84,12 +192,35 @@ export type CustomerSearchResult = {
   addresses: AddressCandidate[];
   /** true when the list is the default "recent" view */
   recent: boolean;
+  filters: CustomerFilters;
+  sort: CustomerSort;
+  /** distinct customer kinds available for the filter UI */
+  availableKinds: string[];
 };
 
+const DEFAULT_RECENT_SORT: CustomerSort = { column: "last_job", direction: "desc" };
+
 /** Search by name / company / phone (findCustomer) and by address (findAddress); recent customers when empty. */
-export async function searchCustomers(query: string): Promise<CustomerSearchResult> {
+export async function searchCustomers(
+  query: string,
+  filters: CustomerFilters = {},
+  sort: CustomerSort | null = null,
+): Promise<CustomerSearchResult> {
   const q = query.trim();
-  if (!q) return { query: "", customers: await customerRows(null), addresses: [], recent: true };
+  const normalized = normalizedFilters(filters);
+
+  if (!q) {
+    const activeSort = sort ?? DEFAULT_RECENT_SORT;
+    return {
+      query: "",
+      customers: await customerRows(null, normalized, activeSort),
+      addresses: [],
+      recent: true,
+      filters: normalized,
+      sort: activeSort,
+      availableKinds: ["business", "homeowner"],
+    };
+  }
 
   const looksLikePhone = /^\+?[\d\s().-]{7,}$/.test(q);
   const phone = looksLikePhone ? toE164(q) : null;
@@ -97,15 +228,38 @@ export async function searchCustomers(query: string): Promise<CustomerSearchResu
     findCustomer(phone ? { phone, limit: 10 } : { name: q, limit: 10 }),
     looksLikePhone ? Promise.resolve(null) : findAddress(q, { limit: 8 }).catch(() => null),
   ]);
+
   const ids = byName.map((c) => c.customer_id);
-  const rows = ids.length ? await customerRows(ids) : [];
+  const preserveMatchOrder = !sort || sort.column === "match";
+  const sqlSort: CustomerSort = preserveMatchOrder
+    ? { column: "name", direction: "asc" }
+    : sort;
+
+  const rows = ids.length ? await customerRows(ids, normalized, sqlSort) : [];
   const byId = new Map(rows.map((r) => [r.id, r]));
-  const customersOut: CustomerRow[] = [];
-  for (const c of byName) {
-    const row = byId.get(c.customer_id);
-    if (row) customersOut.push({ ...row, confidence: c.confidence, matched_by: c.matched_by });
+
+  let customersOut: CustomerRow[] = [];
+  if (preserveMatchOrder) {
+    for (const c of byName) {
+      const row = byId.get(c.customer_id);
+      if (row) customersOut.push({ ...row, confidence: c.confidence, matched_by: c.matched_by });
+    }
+  } else {
+    customersOut = rows.map((r) => {
+      const hit = byName.find((c) => c.customer_id === r.id);
+      return { ...r, confidence: hit?.confidence, matched_by: hit?.matched_by };
+    });
   }
-  return { query: q, customers: customersOut, addresses: byAddress?.candidates ?? [], recent: false };
+
+  return {
+    query: q,
+    customers: customersOut,
+    addresses: byAddress?.candidates ?? [],
+    recent: false,
+    filters: normalized,
+    sort: sort ?? { column: "match", direction: "desc" },
+    availableKinds: ["business", "homeowner"],
+  };
 }
 
 function toE164(raw: string): string | null {
