@@ -14,10 +14,15 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
     "db:seed-users": "tsx src/db/seed-users.ts",
-    "import": "tsx scripts/import.ts"
+    "db:seed-calls": "tsx src/db/seed-calls.ts",
+    "import": "tsx scripts/import.ts",
+    "dossiers": "tsx scripts/dossiers.ts",
+    "vapi:sync": "tsx scripts/vapi-sync.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
     "@base-ui/react": "^1.7.0",
+    "@vapi-ai/web": "2.7.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

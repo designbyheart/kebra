@@ -13,7 +13,7 @@ import {
  * route handlers (`x-agent-secret` / Vapi secret), never with a cookie.
  */
 
-const PUBLIC_EXACT = new Set(["/login", "/api/health"]);
+const PUBLIC_EXACT = new Set(["/login", "/call", "/api/health"]);
 const PUBLIC_PREFIXES = ["/api/voice/", "/api/agent/", "/api/auth/", "/_next/"];
 
 export function isPublicPath(pathname: string): boolean {
