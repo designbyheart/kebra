@@ -261,6 +261,7 @@ describe("tool-calls", () => {
         { id: "t1", name: "ping", args: { echo: "x" } },
         { id: "t2", name: "no_such_tool", args: {} },
         { id: "t3", name: "find_address", args: { nope: 1 } },
+        { id: "t — duplicate id of t1" , name: "ping", args: { echo: "x" } },
         { id: "t4", name: "find_address", args: { query: "zzzzqqq nowhere street 99999" } },
       ]),
     );
@@ -280,6 +281,7 @@ describe("tool-calls", () => {
     // the row was created by the tool-calls message itself
     const row = await getCallByProviderId(c.id);
     expect(row).not.toBeNull();
+    // duplicate id collapses to a single recorded tool call
     expect(row!.toolCalls).toHaveLength(4);
     expect(await eventsFor(row!.id, "call.started")).toHaveLength(1);
   });

@@ -22,3 +22,5 @@ next-env.d.ts
 tsconfig.tsbuildinfo
 # local-only credentials
 docs/CREDENTIALS.local.md
+
+.tmp/

@@ -27,7 +27,7 @@ import {
   type Identification,
 } from "@/domain/calls";
 import { analyzeCall, shouldAutoAnalyze } from "./analyze-call";
-
+import { executeTools, type ToolCallRequest } from "./tool-coordinator";
 // ---------------------------------------------------------------------------
 // Types (the subset of Vapi's ServerMessage we read)
 // ---------------------------------------------------------------------------
@@ -338,22 +338,40 @@ export async function handleToolCalls(msg: VapiMessage): Promise<WebhookResult> 
   const ctx: ToolContext = { callId, actor: "agent", actorId: "vapi" };
   const startedAtCall = secondsFromStart(msg);
 
-  const results = await Promise.all(
-    list.map(async (tc) => {
+  // Serialize + coalesce: run tools one at a time, dropping duplicate tool
+  // calls so a model stuck on keep_investing can't wedge a whole turn.
+  const coords = await executeTools(
+    list.map((tc) => {
       const { name, args } = parseToolCall(tc);
-      const t0 = Date.now();
-      const env = await runTool(name, args, ctx);
-      const ms = Date.now() - t0;
-      console.log(JSON.stringify({ tag: "voice.tool", call: callId, tool: name, ok: env.ok, ms }));
-      if (callId) {
-        const record = { id: tc.id, name, args, result: env, ok: env.ok, t: startedAtCall, durationMs: ms };
-        const ident = identificationFrom(name, args, env);
-        await Promise.all([recordToolCall(callId, record), ident ? markIdentified(callId, ident) : Promise.resolve()]);
-      }
-      return { name, toolCallId: tc.id, result: JSON.stringify(env) };
+      return { id: tc.id, name, args } as ToolCallRequest;
     }),
+    ctx,
   );
-  return { status: 200, body: { results } };
+
+  for (const coord of coords) {
+    const { name, args } = coord;
+    const env = JSON.parse(coord.result) as ToolEnvelope;
+    if (callId) {
+      const record = {
+        id: coord.toolCallId,
+        name,
+        args,
+        result: env,
+        ok: env.ok,
+        t: startedAtCall,
+        durationMs: coord.ms,
+      };
+      const ident = identificationFrom(name, args, env);
+      await Promise.all([
+        recordToolCall(callId, record),
+        ident ? markIdentified(callId, ident) : Promise.resolve(),
+      ]);
+    }
+  }
+  return {
+    status: 200,
+    body: { results: coords.map((c) => ({ name: c.name, toolCallId: c.toolCallId, result: c.result })) },
+  };
 }
 
 // ---------------------------------------------------------------------------
