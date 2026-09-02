@@ -67,7 +67,7 @@ export function MaskedText({ text, className }: { text: string; className?: stri
               })
             }
             className={cn(
-              "mx-0.5 inline-flex h-5 items-center rounded px-1 font-mono text-[11px] leading-none ring-1 ring-inset transition-colors",
+              "mx-0.5 inline-flex h-5 items-center rounded px-1 font-mono text-xs leading-none ring-1 ring-inset transition-colors",
               revealed.has(i)
                 ? "bg-amber-50 text-amber-900 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-800"
                 : "bg-muted text-muted-foreground ring-border hover:bg-accent hover:text-foreground",

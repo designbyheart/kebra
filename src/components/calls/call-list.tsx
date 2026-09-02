@@ -77,7 +77,7 @@ export function CallList({ initial, filter, q }: Props) {
                 {c.key === "live" && n ? <LiveDot className="size-1.5" /> : null}
                 {c.label}
                 {n != null && n > 0 ? (
-                  <span className={cn("rounded-full px-1.5 text-[10px] tabular-nums", active ? "bg-background/20" : "bg-muted")}>{n}</span>
+                  <span className={cn("rounded-full px-1.5 text-xs tabular-nums", active ? "bg-background/20" : "bg-muted")}>{n}</span>
                 ) : null}
               </Link>
             );
@@ -124,7 +124,7 @@ export function CallList({ initial, filter, q }: Props) {
         </Table>
       </div>
 
-      <p className="text-[11px] text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {data.rows.length} call{data.rows.length === 1 ? "" : "s"}
         {live ? " · live view refreshes every 2 s" : ""}
         {sse === "open" ? " · event feed connected" : sse === "closed" ? " · event feed reconnecting" : ""}
@@ -153,7 +153,7 @@ function Row({ row, now, todayIso, onOpen }: { row: CallListRow; now: number; to
             {when}
           </Link>
         </div>
-        {live ? <div className="pl-5 text-[11px] text-amber-700 dark:text-amber-400">{STATUS_LABEL[row.status] ?? row.status}</div> : null}
+        {live ? <div className="pl-5 text-xs text-amber-700 dark:text-amber-400">{STATUS_LABEL[row.status] ?? row.status}</div> : null}
       </TableCell>
       <TableCell className="whitespace-nowrap font-mono text-xs">{row.caller}</TableCell>
       <TableCell className="max-w-0">
@@ -170,7 +170,7 @@ function Row({ row, now, todayIso, onOpen }: { row: CallListRow; now: number; to
       <TableCell className={cn("text-right tabular-nums", live && "text-amber-700 dark:text-amber-400")}>{formatDuration(secs)}</TableCell>
       <TableCell>
         {outcome ? (
-          <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-[11px] font-medium ring-1 ring-inset", outcomeTone(row.outcome))}>{outcome}</span>
+          <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-xs font-medium ring-1 ring-inset", outcomeTone(row.outcome))}>{outcome}</span>
         ) : live ? (
           <AgentBadge label="On the line" />
         ) : (
@@ -181,12 +181,12 @@ function Row({ row, now, todayIso, onOpen }: { row: CallListRow; now: number; to
       <TableCell>
         <div className="flex items-center gap-1.5">
           {row.needsReview ? (
-            <span className="inline-flex h-5 items-center gap-1 rounded-full bg-red-50 px-1.5 text-[11px] font-medium text-red-700 ring-1 ring-red-600/20 ring-inset dark:bg-red-950/40 dark:text-red-300" title="Needs review">
+            <span className="inline-flex h-5 items-center gap-1 rounded-full bg-red-50 px-1.5 text-xs font-medium text-red-700 ring-1 ring-red-600/20 ring-inset dark:bg-red-950/40 dark:text-red-300" title="Needs review">
               <AlertTriangle className="size-3" /> Review
             </span>
           ) : null}
           {row.handoff ? (
-            <span className="inline-flex h-5 items-center gap-1 rounded-full bg-amber-50 px-1.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-950/40 dark:text-amber-300" title="Transfer / handoff">
+            <span className="inline-flex h-5 items-center gap-1 rounded-full bg-amber-50 px-1.5 text-xs font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-950/40 dark:text-amber-300" title="Transfer / handoff">
               <ArrowRightLeft className="size-3" /> Handoff
             </span>
           ) : null}

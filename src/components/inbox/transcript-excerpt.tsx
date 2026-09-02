@@ -65,7 +65,7 @@ export function TranscriptExcerpt({
   return (
     <ol className={cn("divide-y overflow-hidden rounded-md border text-sm", className)}>
       {lines[0].index > 0 ? (
-        <li className="px-3 py-1 text-[11px] text-muted-foreground">
+        <li className="px-3 py-1 text-xs text-muted-foreground">
           … {lines[0].index} earlier turn{lines[0].index === 1 ? "" : "s"}
         </li>
       ) : null}
@@ -75,7 +75,7 @@ export function TranscriptExcerpt({
           data-highlight={l.highlight || undefined}
           className={cn("grid grid-cols-[4rem_1fr] gap-2 px-3 py-1.5", l.highlight && "border-l-2 border-l-red-500 bg-red-500/8 dark:bg-red-400/10")}
         >
-          <span className={cn("text-[11px] font-medium uppercase", l.role === "assistant" ? "text-teal-700 dark:text-teal-300" : "text-muted-foreground")}>
+          <span className={cn("text-xs font-medium uppercase", l.role === "assistant" ? "text-teal-700 dark:text-teal-300" : "text-muted-foreground")}>
             {ROLE_LABEL[l.role] ?? l.role}
           </span>
           <span className={cn(l.highlight && "font-medium")}>

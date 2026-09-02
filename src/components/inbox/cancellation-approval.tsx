@@ -162,7 +162,7 @@ export function CancellationApprovalCardView({
 function Fact({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <dt className="text-[11px] text-muted-foreground">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="truncate">{children}</dd>
     </div>
   );
@@ -207,7 +207,7 @@ function TranscriptExcerpt({ excerpt, hasCall, turnCount }: { excerpt: ExcerptTu
   const first = excerpt[0].index;
   return (
     <ol className="divide-y overflow-hidden rounded-md border text-sm">
-      {first > 0 ? <li className="px-3 py-1 text-[11px] text-muted-foreground">… {first} earlier turn{first === 1 ? "" : "s"}</li> : null}
+      {first > 0 ? <li className="px-3 py-1 text-xs text-muted-foreground">… {first} earlier turn{first === 1 ? "" : "s"}</li> : null}
       {excerpt.map((t) => (
         <li
           key={t.index}
@@ -219,13 +219,13 @@ function TranscriptExcerpt({ excerpt, hasCall, turnCount }: { excerpt: ExcerptTu
         >
           <span
             className={cn(
-              "text-[11px] font-medium uppercase",
+              "text-xs font-medium uppercase",
               t.role === "assistant" ? "text-sky-700 dark:text-sky-300" : "text-muted-foreground",
             )}
           >
             {ROLE_LABEL[t.role] ?? t.role}
           </span>
-          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{formatOffset(t.t)}</span>
+          <span className="font-mono text-xs text-muted-foreground tabular-nums">{formatOffset(t.t)}</span>
           <span className={cn(t.highlight && "font-medium")}>{t.text}</span>
         </li>
       ))}

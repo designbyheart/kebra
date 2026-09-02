@@ -53,7 +53,7 @@ export function ActivityStripClient({
 
   return (
     <aside className={cn("flex min-w-0 flex-col rounded-lg border bg-card", className)} aria-label={title}>
-      <header className="flex items-center gap-2 border-b bg-muted/40 px-3 py-1.5 text-[11px]">
+      <header className="flex items-center gap-2 border-b bg-muted/40 px-3 py-1.5 text-xs">
         <span className="font-medium">{title}</span>
         <span className="text-muted-foreground">last {limit}</span>
         <span className="ml-auto inline-flex items-center gap-1 text-muted-foreground">
@@ -73,14 +73,14 @@ export function ActivityStripClient({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="truncate font-medium">{actorLabelOf(e)}</span>
-                  {isAgent ? <Badge className={cn("h-4 px-1.5 text-[9px] uppercase tracking-wide", AGENT_BADGE)}>Agent</Badge> : null}
-                  <time dateTime={e.ts} title={formatDateTimeET(e.ts)} className="ml-auto shrink-0 font-mono text-[10px] tabular-nums text-muted-foreground">
+                  {isAgent ? <Badge className={cn("h-4 px-1.5 text-xs uppercase tracking-wide", AGENT_BADGE)}>Agent</Badge> : null}
+                  <time dateTime={e.ts} title={formatDateTimeET(e.ts)} className="ml-auto shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
                     {now ? relativeTime(e.ts, now) : formatTimeET(e.ts)}
                   </time>
                 </div>
                 <p className="line-clamp-3 break-words text-muted-foreground">{summary}</p>
                 {e.callId ? (
-                  <Link href={`/calls/${encodeURIComponent(e.callId)}`} className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-teal-700 underline-offset-2 hover:underline dark:text-teal-400">
+                  <Link href={`/calls/${encodeURIComponent(e.callId)}`} className="mt-0.5 inline-flex items-center gap-1 text-xs text-teal-700 underline-offset-2 hover:underline dark:text-teal-400">
                     <Phone className="size-3" /> View call
                   </Link>
                 ) : null}

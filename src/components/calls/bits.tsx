@@ -16,7 +16,7 @@ export function AgentBadge({ label = "Agent", className }: { label?: string; cla
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1 rounded-full bg-teal-50 px-1.5 text-[11px] font-medium text-teal-800 ring-1 ring-teal-600/20 ring-inset dark:bg-teal-950/40 dark:text-teal-300",
+        "inline-flex h-5 items-center gap-1 rounded-full bg-teal-50 px-1.5 text-xs font-medium text-teal-800 ring-1 ring-teal-600/20 ring-inset dark:bg-teal-950/40 dark:text-teal-300",
         className,
       )}
     >

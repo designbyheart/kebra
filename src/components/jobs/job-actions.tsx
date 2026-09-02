@@ -89,7 +89,7 @@ export function JobActions({
       />
 
       {!terminal ? (
-        <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Reassign
           <span className="flex items-center gap-1.5">
             <select value={tech} onChange={(e) => setTech(e.target.value)} className={selectCls}>
@@ -107,7 +107,7 @@ export function JobActions({
         </label>
       ) : null}
 
-      <label className="flex flex-col gap-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <label className="flex flex-col gap-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Status
         <span className="flex items-center gap-1.5">
           <select value={nextStatus} onChange={(e) => setNextStatus(e.target.value)} className={selectCls}>

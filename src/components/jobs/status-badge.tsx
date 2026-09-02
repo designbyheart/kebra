@@ -40,7 +40,7 @@ export const STATUS_DOT: Record<WorkStatus, string> = {
   pending_cancellation: "bg-red-500",
 };
 
-const pill = "inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[11px] font-medium leading-none ring-1 ring-inset";
+const pill = "inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-xs font-medium leading-none ring-1 ring-inset";
 
 export function StatusBadge({ status, className }: { status: WorkStatus; className?: string }) {
   return (

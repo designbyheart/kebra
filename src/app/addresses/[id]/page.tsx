@@ -73,7 +73,7 @@ export default async function AddressPage({ params, searchParams }: { params: Pr
               </Link>
               <KindPill kind={c.kind} company={c.company} />
               {isPM ? (
-                <span className="rounded-md bg-violet-50 px-1.5 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-inset ring-violet-200 dark:bg-violet-950/60 dark:text-violet-300 dark:ring-violet-900">
+                <span className="rounded-md bg-violet-50 px-1.5 py-0.5 text-xs font-medium text-violet-700 ring-1 ring-inset ring-violet-200 dark:bg-violet-950/60 dark:text-violet-300 dark:ring-violet-900">
                   Property manager · {pluralize(d.sites_count, "site")}
                 </span>
               ) : null}

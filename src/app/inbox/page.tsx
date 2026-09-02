@@ -94,7 +94,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Search
               )}
             >
               {KIND_LABEL[k].many}
-              {openByKind[k] ? <span className="rounded bg-background px-1 text-[10px] tabular-nums ring-1 ring-border">{openByKind[k]}</span> : null}
+              {openByKind[k] ? <span className="rounded bg-background px-1 text-xs tabular-nums ring-1 ring-border">{openByKind[k]}</span> : null}
             </Link>
           ))}
         </nav>

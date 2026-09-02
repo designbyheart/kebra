@@ -42,7 +42,7 @@ export function CallDetail({ initial }: { initial: CallDetailData }) {
       <section className="min-w-0">
         <SectionTitle
           aside={
-            <span className="text-[11px] text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {call.transcript.length} turn{call.transcript.length === 1 ? "" : "s"} · {call.toolCalls.length} tool call{call.toolCalls.length === 1 ? "" : "s"}
               {live ? " · refreshing every 2 s" : ""}
               {sse === "open" ? " · feed connected" : ""}
@@ -125,7 +125,7 @@ function TimelineRow({ item }: { item: TimelineItem }) {
       <div className="flex justify-center">
         <span
           className={cn(
-            "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[11px] text-muted-foreground",
+            "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-xs text-muted-foreground",
             item.call.ok === false && "border-red-300 text-red-700 dark:text-red-300",
           )}
           title={`${item.call.name} @ ${formatOffset(item.t)}`}
@@ -139,7 +139,7 @@ function TimelineRow({ item }: { item: TimelineItem }) {
   if (item.kind === "system") {
     return (
       <div className="flex justify-center">
-        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground" title={formatOffset(item.t)}>
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground" title={formatOffset(item.t)}>
           <ArrowRightLeft className="size-3 shrink-0" />
           <span className="truncate">{item.text}</span>
         </span>
@@ -150,7 +150,7 @@ function TimelineRow({ item }: { item: TimelineItem }) {
   return (
     <div className={cn("flex", agent ? "justify-start" : "justify-end")}>
       <div className={cn("max-w-[78%] space-y-1", agent ? "items-start" : "items-end")}>
-        <div className={cn("flex items-center gap-2 text-[11px] text-muted-foreground", agent ? "" : "justify-end")}>
+        <div className={cn("flex items-center gap-2 text-xs text-muted-foreground", agent ? "" : "justify-end")}>
           {agent ? <AgentBadge /> : <span className="font-medium text-foreground">Caller</span>}
           <span className="tabular-nums">{formatOffset(item.t)}</span>
         </div>
@@ -188,7 +188,7 @@ function Header({ call, secs, live }: { call: CallDetailData; secs: number; live
         </div>
         <div className="text-right">
           <div className={cn("text-lg font-semibold tabular-nums", live && "text-amber-700 dark:text-amber-400")}>{formatDuration(secs)}</div>
-          <div className="text-[11px] text-muted-foreground">{live ? STATUS_LABEL[call.status] ?? call.status : endedReasonLabel(call.endedReason) ?? STATUS_LABEL[call.status] ?? call.status}</div>
+          <div className="text-xs text-muted-foreground">{live ? STATUS_LABEL[call.status] ?? call.status : endedReasonLabel(call.endedReason) ?? STATUS_LABEL[call.status] ?? call.status}</div>
         </div>
       </div>
 
@@ -219,7 +219,7 @@ function Header({ call, secs, live }: { call: CallDetailData; secs: number; live
         <dt className="text-muted-foreground">Outcome</dt>
         <dd>
           {outcome ? (
-            <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-[11px] font-medium ring-1 ring-inset", outcomeTone(call.outcome))}>{outcome}</span>
+            <span className={cn("inline-flex h-5 items-center rounded-full px-2 text-xs font-medium ring-1 ring-inset", outcomeTone(call.outcome))}>{outcome}</span>
           ) : (
             <span className="text-muted-foreground">{live ? "In progress" : "Pending analysis"}</span>
           )}
@@ -237,17 +237,17 @@ function Header({ call, secs, live }: { call: CallDetailData; secs: number; live
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {call.needsReview ? (
-          <span className="inline-flex h-5 items-center gap-1 rounded-full bg-red-50 px-1.5 text-[11px] font-medium text-red-700 ring-1 ring-red-600/20 ring-inset dark:bg-red-950/40 dark:text-red-300">
+          <span className="inline-flex h-5 items-center gap-1 rounded-full bg-red-50 px-1.5 text-xs font-medium text-red-700 ring-1 ring-red-600/20 ring-inset dark:bg-red-950/40 dark:text-red-300">
             <AlertTriangle className="size-3" /> Needs review
           </span>
         ) : (
-          <span className="inline-flex h-5 items-center gap-1 rounded-full bg-muted px-1.5 text-[11px] font-medium text-muted-foreground">
+          <span className="inline-flex h-5 items-center gap-1 rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
             <CheckCircle2 className="size-3" /> Reviewed
           </span>
         )}
-        {call.costCents != null ? <span className="text-[11px] text-muted-foreground">${(call.costCents / 100).toFixed(2)}</span> : null}
+        {call.costCents != null ? <span className="text-xs text-muted-foreground">${(call.costCents / 100).toFixed(2)}</span> : null}
         {call.providerCallId ? (
-          <span className="ml-auto truncate font-mono text-[10px] text-muted-foreground" title={call.providerCallId}>
+          <span className="ml-auto truncate font-mono text-xs text-muted-foreground" title={call.providerCallId}>
             {call.providerCallId.slice(0, 18)}
           </span>
         ) : null}
@@ -283,7 +283,7 @@ const ACTION_TONE: Record<ActionKind, string> = {
 function Actions({ call }: { call: CallDetailData }) {
   return (
     <div>
-      <SectionTitle aside={<span className="text-[11px] text-muted-foreground">{call.actions.length}</span>}>Actions taken</SectionTitle>
+      <SectionTitle aside={<span className="text-xs text-muted-foreground">{call.actions.length}</span>}>Actions taken</SectionTitle>
       {call.actions.length === 0 ? (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">Nothing was changed during this call.</p>
       ) : (
@@ -295,7 +295,7 @@ function Actions({ call }: { call: CallDetailData }) {
                 <Icon className={cn("mt-0.5 size-3.5 shrink-0", ACTION_TONE[a.kind])} />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm leading-snug">{a.label}</div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                     {a.agent ? <AgentBadge /> : <span>{a.actorLabel}</span>}
                     <span>{formatTimeET(a.ts)}</span>
                     {a.fixture ? <span className="rounded bg-muted px-1 font-mono">fixture</span> : null}
@@ -326,7 +326,7 @@ function Actions({ call }: { call: CallDetailData }) {
               <Link href={`/inbox?task=${t.id}`} className="min-w-0 flex-1 truncate hover:underline">
                 {t.title}
               </Link>
-              <span className={cn("rounded-full px-1.5 py-px text-[10px] font-medium", t.status === "open" ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" : "bg-muted text-muted-foreground")}>
+              <span className={cn("rounded-full px-1.5 py-px text-xs font-medium", t.status === "open" ? "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" : "bg-muted text-muted-foreground")}>
                 {t.kind} · {t.status.replace("_", " ")}
               </span>
             </li>
@@ -341,7 +341,7 @@ function Promises({ call, live }: { call: CallDetailData; live: boolean }) {
   const analyzed = Boolean(call.summary) || call.promises.length > 0;
   return (
     <div>
-      <SectionTitle aside={<span className="text-[11px] text-muted-foreground">{call.promises.length || ""}</span>}>Promises made</SectionTitle>
+      <SectionTitle aside={<span className="text-xs text-muted-foreground">{call.promises.length || ""}</span>}>Promises made</SectionTitle>
       {call.promises.length === 0 ? (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
           {live ? "Analysis runs when the call ends." : analyzed ? "No promises were made on this call." : "Analysis pending."}
@@ -353,7 +353,7 @@ function Promises({ call, live }: { call: CallDetailData; live: boolean }) {
               <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-teal-700 dark:text-teal-300" />
               <div className="min-w-0 flex-1">
                 <div className="text-sm leading-snug">{p.text}</div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                   {p.kind ? <span className="capitalize">{p.kind}</span> : null}
                   {p.dueAt ? <span>· due {formatDateTimeET(p.dueAt)}</span> : null}
                   {p.taskId ? (

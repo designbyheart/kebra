@@ -31,11 +31,11 @@ export function WarrantyPillWithBasis({ warranty }: { warranty: WarrantyView }) 
       </TooltipTrigger>
       <TooltipContent side="bottom" align="start" className="max-w-sm space-y-2 p-3 text-left">
         <div>
-          <div className="text-[11px] font-semibold tracking-wide uppercase opacity-70">Labor · {w.labor.covered ? "covered" : "not covered"}</div>
+          <div className="text-xs font-semibold tracking-wide uppercase opacity-70">Labor · {w.labor.covered ? "covered" : "not covered"}</div>
           <p className="text-xs leading-relaxed">{w.labor.basis}</p>
         </div>
         <div>
-          <div className="text-[11px] font-semibold tracking-wide uppercase opacity-70">
+          <div className="text-xs font-semibold tracking-wide uppercase opacity-70">
             Parts · {w.parts.covered === true ? "covered" : w.parts.covered === "likely" ? "likely covered" : "not covered"}
             {w.parts.registered === true ? " · registered" : w.parts.registered === false ? " · not registered" : ""}
           </div>

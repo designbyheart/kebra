@@ -168,7 +168,7 @@ export function CallClient({ publicKey, assistantId, phoneE164, phoneLabel }: Pr
             <ol className="mt-5 max-h-48 space-y-1.5 overflow-y-auto border-t pt-4 text-sm" aria-label="Live transcript">
               {lines.map((l, i) => (
                 <li key={i} className={l.role === "assistant" ? "text-foreground" : "text-muted-foreground"}>
-                  <span className="mr-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <span className="mr-2 font-mono text-xs uppercase tracking-wide text-muted-foreground">
                     {l.role === "assistant" ? "Brianna" : "You"}
                   </span>
                   {l.text}

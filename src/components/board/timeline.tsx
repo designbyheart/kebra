@@ -37,7 +37,7 @@ export function Timeline({ date, jobs, techs, allTechs, needsScheduling, flash, 
       <div className="overflow-x-auto rounded-lg border bg-card">
         <div className="min-w-[960px]">
           {/* Hour header */}
-          <div className="grid border-b bg-muted/40 text-[11px] text-muted-foreground" style={{ gridTemplateColumns: `${LABEL_W} 1fr` }}>
+          <div className="grid border-b bg-muted/40 text-xs text-muted-foreground" style={{ gridTemplateColumns: `${LABEL_W} 1fr` }}>
             <div className="px-3 py-1.5 font-medium">Tech</div>
             <div className="relative h-7">
               {TICKS.map((t) => (
@@ -47,7 +47,7 @@ export function Timeline({ date, jobs, techs, allTechs, needsScheduling, flash, 
               ))}
               {nowLeft !== null ? (
                 <span
-                  className="absolute top-0 z-10 -translate-x-1/2 rounded-b bg-red-500 px-1 font-mono text-[10px] font-medium tabular-nums text-white"
+                  className="absolute top-0 z-10 -translate-x-1/2 rounded-b bg-red-500 px-1 font-mono text-xs font-medium tabular-nums text-white"
                   style={{ left: `${nowLeft}%` }}
                 >
                   {shortRange(now, null)}
@@ -73,7 +73,7 @@ export function Timeline({ date, jobs, techs, allTechs, needsScheduling, flash, 
 
       {/* Needs scheduling lane */}
       <section className="rounded-lg border bg-card">
-        <header className="flex items-center gap-2 border-b bg-muted/40 px-3 py-1.5 text-[11px]">
+        <header className="flex items-center gap-2 border-b bg-muted/40 px-3 py-1.5 text-xs">
           <span className="size-2 rounded-full bg-violet-500" aria-hidden />
           <span className="font-medium">Needs scheduling</span>
           <span className="text-muted-foreground">
@@ -119,11 +119,11 @@ function TimelineRow({
     <div className={cn("grid border-b last:border-b-0", row.muted && "bg-muted/20")} style={{ gridTemplateColumns: `${LABEL_W} 1fr` }}>
       <div className="flex flex-col justify-center border-r px-3 py-1.5">
         <div className={cn("truncate text-sm font-medium", row.muted && "text-muted-foreground")}>{row.title}</div>
-        {row.subtitle ? <div className="truncate text-[11px] text-muted-foreground">{row.subtitle}</div> : null}
+        {row.subtitle ? <div className="truncate text-xs text-muted-foreground">{row.subtitle}</div> : null}
       </div>
       <div className="relative" style={{ height, ...gridBackground() }}>
         {nowLeft !== null ? <span aria-hidden className="absolute inset-y-0 z-[2] w-px bg-red-500/80" style={{ left: `${nowLeft}%` }} /> : null}
-        {row.jobs.length === 0 ? <span className="absolute inset-0 flex items-center px-3 text-[11px] text-muted-foreground">none</span> : null}
+        {row.jobs.length === 0 ? <span className="absolute inset-0 flex items-center px-3 text-xs text-muted-foreground">none</span> : null}
         {placed.map(({ item, lane }) => (
           <JobCard
             key={item.job_id}

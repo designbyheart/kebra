@@ -71,7 +71,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                   <a key={p.id} href={`tel:${p.phone}`} className="inline-flex items-center gap-1 tabular-nums hover:underline" title={`${p.label ?? "phone"} · ${p.source}`}>
                     <Phone className="size-3" />
                     {formatPhone(p.phone)}
-                    {p.source === "agent" ? <span className="rounded bg-teal-600 px-1 text-[10px] font-medium text-white">Agent</span> : null}
+                    {p.source === "agent" ? <span className="rounded bg-teal-600 px-1 text-xs font-medium text-white">Agent</span> : null}
                   </a>
                 ))}
               </span>
@@ -197,7 +197,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
                           {call.direction} · {call.status}
                           {call.outcome ? ` · ${call.outcome}` : ""}
                         </span>
-                        {call.needsReview ? <span className="rounded bg-amber-50 px-1 text-[10px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200">needs review</span> : null}
+                        {call.needsReview ? <span className="rounded bg-amber-50 px-1 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">needs review</span> : null}
                       </Link>
                       {call.summary ? <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{call.summary}</p> : null}
                     </li>

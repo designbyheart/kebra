@@ -38,7 +38,7 @@ export function PendingCancellationBadge({
         "inline-flex w-fit shrink-0 items-center gap-1 rounded-md border font-medium whitespace-nowrap",
         "border-red-500/50 text-red-700 dark:border-red-400/50 dark:text-red-300",
         PENDING_CANCELLATION_STRIPES,
-        size === "sm" ? "h-4 px-1.5 text-[10px] leading-none" : "h-5 px-2 text-xs",
+        size === "sm" ? "h-4 px-1.5 text-xs leading-none" : "h-5 px-2 text-xs",
         className,
       )}
     >

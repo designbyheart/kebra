@@ -41,7 +41,7 @@ export function EquipmentPanel({
                   {e.seer ? <span className="text-xs text-muted-foreground">{e.seer} SEER</span> : null}
                   {e.model ? <span className="font-mono text-xs text-muted-foreground">{e.model}</span> : null}
                   {e.source_job_id === installJobId ? (
-                    <span className="inline-flex h-4 items-center rounded bg-emerald-50 px-1 text-[10px] font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-900">
+                    <span className="inline-flex h-4 items-center rounded bg-emerald-50 px-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-900">
                       warranty basis
                     </span>
                   ) : null}
@@ -52,7 +52,7 @@ export function EquipmentPanel({
                     job
                   </Link>
                 </div>
-                <div className="mt-0.5 truncate text-[11px] text-muted-foreground/80" title={e.line}>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground/80" title={e.line}>
                   {e.line}
                 </div>
               </li>
@@ -78,7 +78,7 @@ export function EquipmentPanel({
             <ul className="mt-2 space-y-1.5 text-xs">
               {evidence.map((ev, i) => (
                 <li key={i} className="flex gap-2">
-                  <span className="shrink-0 rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground ring-1 ring-inset ring-border">{ev.kind.replace("_", " ")}</span>
+                  <span className="shrink-0 rounded bg-muted px-1 font-mono text-xs text-muted-foreground ring-1 ring-inset ring-border">{ev.kind.replace("_", " ")}</span>
                   <span>
                     {ev.text}{" "}
                     <Link href={`/jobs/${ev.job_id}`} className="text-muted-foreground hover:underline">

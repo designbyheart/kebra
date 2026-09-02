@@ -184,7 +184,7 @@ export default async function JobPage({ params }: { params: Promise<{ id: string
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="truncate">{children}</dd>
     </div>
   );

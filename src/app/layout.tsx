@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Urbanist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Nav } from "@/components/nav";
 import { UserMenu } from "@/components/user-menu";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const urbanist = Urbanist({ variable: "--font-sans", subsets: ["latin"], display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -18,7 +20,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${urbanist.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider>
         <TooltipProvider>
           <div className="flex min-h-screen">
             <aside className="flex w-56 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
@@ -29,12 +32,16 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </div>
               <Nav />
               <UserMenu />
-              <div className="mt-auto border-t p-3 text-xs text-muted-foreground">America/New_York</div>
+              <div className="mt-auto flex items-center justify-between border-t p-3 text-sm text-muted-foreground">
+                <span>America/New_York</span>
+                <ThemeToggle />
+              </div>
             </aside>
             <main className="min-w-0 flex-1 px-8 py-6">{children}</main>
           </div>
           <Toaster />
         </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

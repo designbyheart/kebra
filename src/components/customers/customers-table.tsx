@@ -9,7 +9,7 @@ export function KindPill({ kind, company }: { kind: string | null; company?: str
   const label = kindLabel(kind, company);
   const Icon = label === "Business" ? Building2 : House;
   return (
-    <span className="inline-flex h-5 items-center gap-1 rounded-md bg-muted px-1.5 text-[11px] font-medium text-muted-foreground ring-1 ring-inset ring-border">
+    <span className="inline-flex h-5 items-center gap-1 rounded-md bg-muted px-1.5 text-xs font-medium text-muted-foreground ring-1 ring-inset ring-border">
       <Icon className="size-3" />
       {label}
     </span>

@@ -165,7 +165,7 @@ export function JobSheet({ jobId, date, techs, refreshToken, onClose, onChanged 
                     <dt className="text-muted-foreground">Tags</dt>
                     <dd className="flex flex-wrap gap-1">
                       {job.tags.map((t) => (
-                        <Badge key={t} variant="secondary" className="h-4 px-1.5 text-[10px]">
+                        <Badge key={t} variant="secondary" className="h-4 px-1.5 text-xs">
                           {t}
                         </Badge>
                       ))}
@@ -246,8 +246,8 @@ function NotesSection({ notes, disabled, onAdd }: { notes: JobSheetData["notes"]
       <ol className="max-h-64 space-y-2 overflow-y-auto pr-1">
         {notes.map((n) => (
           <li key={n.id} className="rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
-            <div className="mb-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              {n.authorType === "agent" ? <Badge className={cn("h-4 px-1.5 text-[9px] uppercase", AGENT_BADGE)}>Agent</Badge> : <span className="font-medium text-foreground">{NOTE_AUTHOR_LABEL[n.authorType] ?? n.authorType}</span>}
+            <div className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              {n.authorType === "agent" ? <Badge className={cn("h-4 px-1.5 text-xs uppercase", AGENT_BADGE)}>Agent</Badge> : <span className="font-medium text-foreground">{NOTE_AUTHOR_LABEL[n.authorType] ?? n.authorType}</span>}
               <span title={formatDateTimeET(n.createdAt)}>{formatDateTimeET(n.createdAt).replace(/ [A-Z]{3,4}$/, "")}</span>
             </div>
             <p className="whitespace-pre-wrap break-words">{n.content}</p>
@@ -343,7 +343,7 @@ function RescheduleSection({
       {locked ? <p className="text-xs text-muted-foreground">Only scheduled or needs-scheduling jobs can be moved (this one is {job.workStatus}).</p> : null}
       <div className="grid grid-cols-3 gap-2">
         <div className="space-y-1">
-          <Label htmlFor="rs-type" className="text-[11px]">
+          <Label htmlFor="rs-type" className="text-xs">
             Service
           </Label>
           <select id="rs-type" className={SELECT_CLS} value={serviceType} onChange={(e) => setServiceType(e.target.value)} disabled={disabled || locked}>
@@ -355,7 +355,7 @@ function RescheduleSection({
           </select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="rs-tech" className="text-[11px]">
+          <Label htmlFor="rs-tech" className="text-xs">
             Tech
           </Label>
           <select id="rs-tech" className={SELECT_CLS} value={techId} onChange={(e) => setTechId(e.target.value)} disabled={disabled || locked}>
@@ -368,14 +368,14 @@ function RescheduleSection({
           </select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="rs-from" className="text-[11px]">
+          <Label htmlFor="rs-from" className="text-xs">
             From
           </Label>
           <Input id="rs-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} disabled={disabled || locked} className="h-8 font-mono text-xs" />
         </div>
       </div>
       <div className="space-y-1">
-        <Label htmlFor="rs-reason" className="text-[11px]">
+        <Label htmlFor="rs-reason" className="text-xs">
           Reason (goes in the job notes)
         </Label>
         <Input id="rs-reason" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Customer asked to move it" disabled={disabled || locked} className="h-8 text-sm" />
@@ -385,7 +385,7 @@ function RescheduleSection({
           {finding ? <Loader2 className="size-3.5 animate-spin" /> : null}
           Find open windows
         </Button>
-        <span className="text-[11px] text-muted-foreground">3 days from the date above, 2 h arrival windows</span>
+        <span className="text-xs text-muted-foreground">3 days from the date above, 2 h arrival windows</span>
       </div>
       {slots ? (
         slots.length === 0 ? (
@@ -415,7 +415,7 @@ function RescheduleSection({
         <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Set a window by hand (ET)</summary>
         <div className="mt-2 flex items-end gap-2">
           <div className="flex-1 space-y-1">
-            <Label htmlFor="rs-free" className="text-[11px]">
+            <Label htmlFor="rs-free" className="text-xs">
               Arrival window start
             </Label>
             <Input id="rs-free" type="datetime-local" step={3600} value={freeform} onChange={(e) => setFreeform(e.target.value)} disabled={disabled || locked} className="h-8 font-mono text-xs" />
@@ -424,7 +424,7 @@ function RescheduleSection({
             Move
           </Button>
         </div>
-        <p className="mt-1 text-[11px] text-muted-foreground">Must start on the hour inside business hours; the slot is re-checked against the tech&apos;s day.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Must start on the hour inside business hours; the slot is re-checked against the tech&apos;s day.</p>
       </details>
     </section>
   );
@@ -452,7 +452,7 @@ function ReassignSection({ job, techs, disabled, run }: { job: JobSheetData["job
           Reassign
         </Button>
       </div>
-      {terminal ? <p className="text-[11px] text-muted-foreground">Closed jobs cannot be reassigned.</p> : null}
+      {terminal ? <p className="text-xs text-muted-foreground">Closed jobs cannot be reassigned.</p> : null}
     </section>
   );
 }
@@ -481,7 +481,7 @@ function StatusSection({ job, disabled, run }: { job: JobSheetData["job"]; disab
       </div>
       {!canceled ? (
         <div className="rounded-md border border-dashed p-2.5">
-          <div className="mb-1.5 text-[11px] font-medium text-muted-foreground">Cancel this job</div>
+          <div className="mb-1.5 text-xs font-medium text-muted-foreground">Cancel this job</div>
           <div className="flex items-center gap-2">
             <Input value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="Reason (required)" disabled={disabled} className="h-8 text-sm" />
             <Button
@@ -497,7 +497,7 @@ function StatusSection({ job, disabled, run }: { job: JobSheetData["job"]; disab
               Cancel job
             </Button>
           </div>
-          {job.workStatus === "pending_cancellation" ? <p className="mt-1 text-[11px] text-muted-foreground">This also approves the pending request.</p> : null}
+          {job.workStatus === "pending_cancellation" ? <p className="mt-1 text-xs text-muted-foreground">This also approves the pending request.</p> : null}
         </div>
       ) : null}
     </section>

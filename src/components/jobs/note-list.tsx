@@ -32,7 +32,7 @@ export function NoteList({ notes, className, emptyText = "No notes yet." }: { no
         <li key={n.id} className="flex gap-3">
           <span
             className={cn(
-              "mt-0.5 inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-[11px] font-medium leading-none ring-1 ring-inset",
+              "mt-0.5 inline-flex h-5 shrink-0 items-center rounded-md px-1.5 text-xs font-medium leading-none ring-1 ring-inset",
               AUTHOR_CLASS[n.authorType],
             )}
           >
