@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 
-const urbanist = Urbanist({ variable: "--font-sans", subsets: ["latin"], display: "swap" });
+const urbanist = Urbanist({ variable: "--font-urbanist", subsets: ["latin"], display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${urbanist.variable} ${geistMono.variable} antialiased`}>
+    <html lang="en" suppressHydrationWarning className={`${urbanist.variable} ${geistMono.variable}`}>
+      <body className="antialiased">
         <ThemeProvider>
         <TooltipProvider>
           <div className="flex min-h-screen">
