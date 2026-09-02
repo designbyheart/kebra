@@ -1,11 +1,17 @@
-// Owned by W1-B (see docs/briefs/). Register tools here; the registry merges this map.
+// Owned by W1-B (see docs/briefs/W1-B-scheduling.md). The registry merges this map.
 import type { ToolDef } from "@/agent/registry";
+import { findAvailabilityTool } from "@/agent/tools/find-availability";
+import { bookJobTool } from "@/agent/tools/book-job";
+import { rescheduleJobTool } from "@/agent/tools/reschedule-job";
+import { requestCancellationTool } from "@/agent/tools/request-cancellation";
+import { addNoteTool } from "@/agent/tools/add-note";
+import { createTaskTool } from "@/agent/tools/create-task";
 
 export const tools: Record<string, ToolDef> = {
-  // find_availability
-  // book_job
-  // reschedule_job
-  // request_cancellation
-  // add_note
-  // create_task
+  find_availability: findAvailabilityTool,
+  book_job: bookJobTool,
+  reschedule_job: rescheduleJobTool,
+  request_cancellation: requestCancellationTool,
+  add_note: addNoteTool,
+  create_task: createTaskTool,
 };
