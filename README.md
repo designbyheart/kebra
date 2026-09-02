@@ -172,6 +172,7 @@ src/domain/              availability, jobs, change-requests, warranty, history,
 src/voice/               assistant.ts (Vapi config), prompt.ts, webhook.ts, analyze-call.ts
 src/lib/                 events, session/auth, time (ET), address normalization, anthropic client, cache
 src/app/                 pages (today, calls, customers, addresses, jobs, inbox, call, login) and api routes
-src/components/          board, calls, customers, inbox, jobs, ui
+src/components/          atoms/ (incl. atoms/ui shadcn), molecules/, organisms/, templates/ — strict atomic design, see docs/UI-ARCHITECTURE.md
+src/lib/ui/, src/hooks/    pure UI helpers and client hooks (no DB imports)
 tests/                   registry and time tests (unit tests also live next to their modules)
 ```
