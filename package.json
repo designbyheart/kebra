@@ -17,6 +17,7 @@
     "db:seed-calls": "tsx src/db/seed-calls.ts",
     "import": "tsx scripts/import.ts",
     "dossiers": "tsx scripts/dossiers.ts",
+    "analyze-calls": "tsx scripts/analyze-calls.ts",
     "vapi:sync": "tsx scripts/vapi-sync.ts"
   },
   "dependencies": {

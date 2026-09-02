@@ -26,6 +26,7 @@ import {
   type CallMeta,
   type Identification,
 } from "@/domain/calls";
+import { analyzeCall, shouldAutoAnalyze } from "./analyze-call";
 
 // ---------------------------------------------------------------------------
 // Types (the subset of Vapi's ServerMessage we read)
@@ -396,6 +397,10 @@ export async function handleEndOfCallReport(msg: VapiMessage): Promise<WebhookRe
       summary: `Transfer to the office failed (${endedReason.replace(/[-_.]+/g, " ")})`,
       reason: endedReason,
     });
+  }
+  if (shouldAutoAnalyze()) {
+    // W3-A: fire-and-forget; the report must be acknowledged within Vapi's timeout.
+    void analyzeCall(id).catch((err) => console.error(`[voice:analyze:${id}]`, err));
   }
   return { status: 200, body: {} };
 }
