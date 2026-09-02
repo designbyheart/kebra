@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Nav } from "@/components/nav";
+import { UserMenu } from "@/components/user-menu";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 </Link>
               </div>
               <Nav />
+              <UserMenu />
               <div className="mt-auto border-t p-3 text-xs text-muted-foreground">America/New_York</div>
             </aside>
             <main className="min-w-0 flex-1 px-8 py-6">{children}</main>
