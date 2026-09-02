@@ -214,7 +214,7 @@ function TranscriptExcerpt({ excerpt, hasCall, turnCount }: { excerpt: ExcerptTu
           data-highlight={t.highlight || undefined}
           className={cn(
             "grid grid-cols-[3.5rem_2.5rem_1fr] items-baseline gap-2 px-3 py-1.5",
-            t.highlight && "border-l-2 border-l-red-500 bg-red-500/8 dark:bg-red-400/10",
+            t.highlight && "bg-red-500/8 dark:bg-red-400/10",
           )}
         >
           <span
