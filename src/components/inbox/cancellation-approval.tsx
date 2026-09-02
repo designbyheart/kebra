@@ -104,7 +104,7 @@ export function CancellationApprovalCardView({
       <CardContent className="flex flex-col gap-3">
         <section>
           <h4 className="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Reason recorded by the agent</h4>
-          <p className="rounded-md border border-l-2 border-l-red-500 bg-muted/40 px-3 py-2 text-sm">
+          <p className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
             {data.reason?.trim() || <span className="text-muted-foreground">No reason recorded.</span>}
           </p>
         </section>
