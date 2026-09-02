@@ -128,3 +128,4 @@ Not implemented as an HTTP tool. Configured in the Vapi assistant as a native `t
 
 - 2026-09-02 v1 — frozen for Wave 1.
 - 2026-09-02 v1.1 — aligned `ctx` shape and handler convention with the W0 scaffold (`src/agent/registry.ts`, `src/agent/errors.ts`).
+- 2026-09-02 v1.2 (W1-E) — `web_search.speech_hint` speaks only the first sentence of Tavily's answer (full answer in `result.answer`); `get_weather` retries geocoding without the Florida bias when the biased query finds nothing and returns `not_found` otherwise; `max_results` is optional with the default applied in the handler so the JSON schema marks it optional.
