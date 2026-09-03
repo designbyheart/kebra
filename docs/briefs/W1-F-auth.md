@@ -12,18 +12,18 @@
 - Report back: what shipped, how you verified it, deviations from the contract, open risks. Keep it under 300 words.
 
 ## You own
-`src/lib/auth.ts`, `src/lib/session.ts`, `src/middleware.ts`, `src/app/login/*`, `src/app/api/auth/*`, `src/db/seed-users.ts`, tests. You may add a `pnpm db:seed-users` script.
+`src/lib/auth.ts`, `src/lib/session.ts`, `src/proxy.ts`, `src/app/login/*`, `src/app/api/auth/*`, `src/db/seed-users.ts`, tests. You may add a `pnpm db:seed-users` script.
 
 ## Deliverables
 1. Email + password auth with no external service: `bcryptjs` for hashes (add dep), signed session cookie (`jose` HS256 with `SESSION_SECRET`, httpOnly, secure in prod, sameSite lax, 7-day expiry, sliding). Helpers: `getCurrentUser()` (server components and route handlers), `requireUser(roles?)`, `login`, `logout`.
-2. `src/middleware.ts`: everything under `/` requires a session except `/login`, `/api/health`, `/api/voice/*`, `/api/agent/*` (those authenticate with `x-agent-secret` / Vapi secret, not sessions), `/_next/*`, static assets.
+2. `src/proxy.ts`: everything under `/` requires a session except `/login`, `/api/health`, `/api/voice/*`, `/api/agent/*` (those authenticate with `x-agent-secret` / Vapi secret, not sessions), `/_next/*`, static assets.
 3. Seed users from `employees` where role is admin or office staff, plus an `owner` account and a `grader` account (role admin): emails `first.last@gulfbreezeair.demo`, `owner@gulfbreezeair.demo`, `grader@gulfbreezeair.demo`; passwords generated once (`openssl rand`-style, 12 chars) and written to `docs/CREDENTIALS.local.md` which must be in `.gitignore` (add the line). Print nothing secret to the console except the path of that file.
 4. Login page: minimal, on-brand (company name, email, password, error state). After login redirect to `/` (Today). A user menu in the layout with name, role and Logout (coordinate: only touch the header slot the layout exposes; if none exists add a `UserMenu` component and a single import line in `src/app/layout.tsx`).
 5. `emitEvent({type: "user.login"})` on success. Role check helper `isAdmin(user)` = owner or admin, used by W2-E for cancellation approval.
 6. Wire `ctx.actor` for office-initiated domain calls: an `actorFromUser(user)` helper returning `{ userId, label }`.
 
 ## Acceptance
-- Tests: hash/verify, session sign/verify/expiry, middleware allow/deny matrix (including that `/api/agent/tools/ping` without a session but with the right secret returns 200 and without the secret returns 401).
+- Tests: hash/verify, session sign/verify/expiry, proxy allow/deny matrix (including that `/api/agent/tools/ping` without a session but with the right secret returns 200 and without the secret returns 401).
 - Manual: log in as grader, see Today; log out; hitting `/calls` redirects to `/login?next=/calls`.
 
 ## Addendum (coordinator, after W0)

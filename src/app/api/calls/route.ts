@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 /**
  * GET /api/calls?f=<all|live|today|review|handoffs>&q=<text>
  * Same rows the server render uses; the list page polls this for refresh.
- * Session is enforced by middleware.
+ * Session is enforced by the proxy.
  */
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;

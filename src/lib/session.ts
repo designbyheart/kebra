@@ -1,9 +1,9 @@
 import { SignJWT, jwtVerify, errors as joseErrors } from "jose";
 
 /**
- * Signed session cookie (HS256 via `jose`, so it verifies in the edge
- * middleware and in Node route handlers alike). The cookie carries only what
- * the middleware needs to make an allow/deny decision; `getCurrentUser()`
+ * Signed session cookie (HS256 via `jose`, so it verifies in the proxy
+ * and in Node route handlers alike). The cookie carries only what
+ * the proxy needs to make an allow/deny decision; `getCurrentUser()`
  * reloads the row so role/name changes take effect on the next request.
  */
 
@@ -92,7 +92,7 @@ export function shouldRefresh(session: SessionPayload, now: Date = new Date()): 
   return nowSec - session.iat >= SESSION_REFRESH_AFTER_SECONDS;
 }
 
-/** Cookie attributes shared by login, logout and the middleware refresh. */
+/** Cookie attributes shared by login, logout and the proxy refresh. */
 export function sessionCookieOptions(maxAge: number = SESSION_TTL_SECONDS) {
   return {
     httpOnly: true,

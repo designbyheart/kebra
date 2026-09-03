@@ -1,9 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
-import { isPublicPath, middleware } from "@/middleware";
+import { isPublicPath, proxy } from "@/proxy";
 import { SESSION_COOKIE, signSession } from "@/lib/session";
 
-const secret = "middleware-test-secret-0123456789";
+const secret = "proxy-test-secret-0123456789abcd";
 const grader = { userId: "usr_grader", email: "grader@gulfbreezeair.demo", name: "Grader", role: "admin" as const };
 const origin = "http://localhost:3999";
 
@@ -47,9 +47,9 @@ describe("isPublicPath", () => {
   });
 });
 
-describe("middleware allow/deny", () => {
+describe("proxy allow/deny", () => {
   it("redirects a page request without a session to /login?next=<path>", async () => {
-    const res = await middleware(req("/calls"));
+    const res = await proxy(req("/calls"));
     expect(res.status).toBe(307);
     const loc = new URL(res.headers.get("location")!);
     expect(loc.pathname).toBe("/login");
@@ -57,19 +57,19 @@ describe("middleware allow/deny", () => {
   });
 
   it("keeps the query string in next=", async () => {
-    const res = await middleware(req("/jobs?day=2026-09-02"));
+    const res = await proxy(req("/jobs?day=2026-09-02"));
     expect(new URL(res.headers.get("location")!).searchParams.get("next")).toBe("/jobs?day=2026-09-02");
   });
 
   it("returns 401 JSON for a private API route without a session", async () => {
-    const res = await middleware(req("/api/events/stream"));
+    const res = await proxy(req("/api/events/stream"));
     expect(res.status).toBe(401);
     expect(await res.json()).toEqual({ ok: false, error: "unauthorized" });
   });
 
   it("lets a valid session through and forwards x-pathname", async () => {
     const token = await signSession(grader, { secret });
-    const res = await middleware(req("/calls?x=1", { cookie: token }));
+    const res = await proxy(req("/calls?x=1", { cookie: token }));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-middleware-next")).toBe("1");
     expect(res.headers.get("x-middleware-override-headers")).toContain("x-pathname");
@@ -79,7 +79,7 @@ describe("middleware allow/deny", () => {
 
   it("re-issues the cookie when the session is older than a day (sliding)", async () => {
     const token = await signSession(grader, { secret, now: new Date(Date.now() - 2 * 86_400_000) });
-    const res = await middleware(req("/today", { cookie: token }));
+    const res = await proxy(req("/today", { cookie: token }));
     expect(res.status).toBe(200);
     const setCookie = res.headers.get("set-cookie") ?? "";
     expect(setCookie).toContain(`${SESSION_COOKIE}=`);
@@ -89,15 +89,15 @@ describe("middleware allow/deny", () => {
 
   it("rejects an expired or forged session", async () => {
     const expired = await signSession(grader, { secret, now: new Date(Date.now() - 8 * 86_400_000) });
-    expect((await middleware(req("/today", { cookie: expired }))).status).toBe(307);
+    expect((await proxy(req("/today", { cookie: expired }))).status).toBe(307);
     const forged = await signSession(grader, { secret: "some-other-secret-that-is-long" });
-    expect((await middleware(req("/today", { cookie: forged }))).status).toBe(307);
+    expect((await proxy(req("/today", { cookie: forged }))).status).toBe(307);
   });
 
   it.each(["/login", "/api/health", "/api/voice/webhook", "/api/agent/tools/ping", "/api/auth/login"])(
     "passes %s through without a session",
     async (path) => {
-      const res = await middleware(req(path, { method: path.startsWith("/api/a") ? "POST" : "GET" }));
+      const res = await proxy(req(path, { method: path.startsWith("/api/a") ? "POST" : "GET" }));
       expect(res.status).toBe(200);
       expect(res.headers.get("x-middleware-next")).toBe("1");
     },
@@ -119,8 +119,8 @@ describe("agent tool route keeps its own secret-header auth", () => {
   async function callPing(headers: Record<string, string>) {
     const { POST } = await import("@/app/api/agent/tools/[tool]/route");
     const r = req("/api/agent/tools/ping", { method: "POST", headers: { "content-type": "application/json", ...headers } });
-    // middleware lets it through with no session...
-    expect((await middleware(r)).headers.get("x-middleware-next")).toBe("1");
+    // proxy lets it through with no session...
+    expect((await proxy(r)).headers.get("x-middleware-next")).toBe("1");
     // ...and the handler decides on the secret.
     return POST(new NextRequest(r.url, { method: "POST", headers: r.headers, body: "{}" }), {
       params: Promise.resolve({ tool: "ping" }),

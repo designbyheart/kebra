@@ -24,7 +24,7 @@ export function isPublicPath(pathname: string): boolean {
   return false;
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
   // Downstream server components read this to build `?next=` on redirect.
   const requestHeaders = new Headers(req.headers);

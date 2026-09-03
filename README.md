@@ -155,7 +155,7 @@ Total to date about **$27**, expected to stay under $40 after QA calls and the r
 - No after-hours flag in `business_hours`, so out-of-hours emergencies hand off instead of getting a slot.
 - Live transfer needs `OFFICE_HANDOFF_NUMBER` on the Railway service; otherwise handoff is task-only.
 - Free Vapi numbers are inbound-only and US-only; international graders should use `/call`.
-- Next 16 deprecates `middleware.ts` (rename to `proxy`); `railway.json` is deprecated for `.railway/railway.ts` (works until 2026-12-01).
+- `railway.json` is deprecated for `.railway/railway.ts` (works until 2026-12-01).
 - Not built: outbound confirmation SMS/email, per-tech map, owner revenue dashboard, editable business hours.
 
 ## Repo map
