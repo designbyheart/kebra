@@ -1,2 +1,18 @@
+# Nothing staged means nothing to lint and nothing that can change the type
+# result, so skip straight out. Deletions are included on purpose: removing a
+# `.ts` file can break the modules that imported it.
+staged=$(git diff --cached --name-only)
+if [ -z "$staged" ]; then
+  echo "pre-commit: no staged files, skipping lint and typecheck."
+  exit 0
+fi
+
 pnpm exec lint-staged
-pnpm run typecheck
+
+# tsc walks the whole project, so only pay for it when the commit can actually
+# move the needle: TS sources, or the configs that drive them.
+if printf '%s\n' "$staged" | grep -qE '\.(ts|tsx|mts|cts)$|(^|/)tsconfig[^/]*\.json$|(^|/)package\.json$'; then
+  pnpm run typecheck
+else
+  echo "pre-commit: no TypeScript staged, skipping typecheck."
+fi
