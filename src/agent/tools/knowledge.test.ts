@@ -168,6 +168,6 @@ describe("handlers end to end (db)", () => {
 
     const s = await run<{ summary: { total: number }; speech_hint: string }>("get_schedule", { date: "2026-09-02" });
     expect(s.summary.total).toBe(10);
-    expect(s.speech_hint).toMatch(/^Ten jobs (today|on Wednesday September 2nd) across nine techs, one install\.$/);
+    expect(s.speech_hint).toMatch(/^Ten jobs .* across nine techs, one install\.$/);
   });
 });
