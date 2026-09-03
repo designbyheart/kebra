@@ -18,7 +18,13 @@
     "import": "tsx scripts/import.ts",
     "dossiers": "tsx scripts/dossiers.ts",
     "analyze-calls": "tsx scripts/analyze-calls.ts",
-    "vapi:sync": "tsx scripts/vapi-sync.ts"
+    "vapi:sync": "tsx scripts/vapi-sync.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint"
+    ]
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
