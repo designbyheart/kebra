@@ -318,3 +318,61 @@ Unverified: whether Vapi's free number has a daily call cap (third parties menti
 1. Any preference on voice platform or model beyond my recommendation?
 2. Will you be reachable on your mobile during the 24h live window for the handoff demo, or should handoff go to voicemail-style capture only?
 3. (resolved) Cancellations are approved by admins in the platform with the transcript passage attached; emailing the caller a copy is a stretch goal.
+
+---
+
+## 14. Reschedule / scheduling hardening amendment (2026-09-03)
+
+This amendment addresses the re-scheduling failure reported on call `01a06766-5402-7aa6-9587-765f12117496` and makes the scheduling path bulletproof before demo day.
+
+### What happened on the call
+
+Vapi logs show the call ended with `customer-ended-call`. There is no backend error, 5xx, or tool exception associated with the reschedule attempt. The root cause is fragility, not a crash: the current reschedule flow forces the model through three independent tool turns (find the job/dossier → `find_availability` → `reschedule_job`) before any write occurs. Longer multi-turn flows give callers more opportunities to hang up and create windows where slot data can go stale.
+
+### What we will change
+
+1. **Fix the `nextInvoiceNumber` race that flakes combined test runs.**
+   - **Where:** `src/domain/jobs.ts`, plus new migration `drizzle/0002_invoice_sequence.sql`.
+   - **What:** Replace the advisory-lock + `max(jobs.invoiceNumber::int) + 1` pattern with a Postgres sequence `kebra.invoice_number_seq` initialized to `max(numeric invoice) + 1`.
+   - **Why:** The current pattern allows concurrent `book_job` calls to compute the same next number, producing duplicate/offset invoice numbers in parallel tests (observed: expected 5521, got 5520). A sequence is atomic and removes the need for an advisory lock.
+   - **Acceptance:** `pnpm test src/agent/tools/schedule.test.ts src/domain/scheduling.test.ts src/voice/webhook.test.ts --no-watch` passes 20 consecutive runs, and a new concurrency test asserts unique invoices under 10 parallel `bookJob` calls.
+
+2. **Add a `find_reschedule_slots` convenience tool to compress the reschedule flow.**
+   - **Where:** new `src/agent/tools/find-reschedule-slots.ts`, registered in `src/agent/registry.ts` and exported from `src/agent/tools/schedule.ts`.
+   - **What:** Input `{ job_id, from }`. It loads the job, derives its service type and current/preferred tech, then calls `findAvailability` and returns `{ job_summary, slots, speech_hint }` in one turn.
+   - **Why:** Cuts the reschedule offer flow from three model turns to two (slots → confirm → reschedule), reducing hang-up risk and slot-stale risk.
+   - **Acceptance:** Tool-layer test validates schema and speech_hint; domain test validates returned slots respect the job's service type and current tech.
+
+3. **Tighten `reschedule_job` model-facing contract and guardrails.**
+   - **Where:** `src/agent/tools/reschedule-job.ts` and `src/domain/jobs.ts`.
+   - **What:** Description will explicitly state the exact `new_window_start` must come from `find_availability`/`find_reschedule_slots`, `employee_id` is only for changing tech, and a reason is required. Domain side will return a clear `validation`/`speech_hint` when the job has no tech and none is provided, pointing the model at availability lookup.
+   - **Why:** Prevents the model from guessing times or calling reschedule on an unassigned job.
+   - **Acceptance:** JSON schema test confirms required fields; error hint contains guidance to find an available technician.
+
+4. **Add webhook-level reschedule integration tests.**
+   - **Where:** `src/voice/webhook.test.ts`.
+   - **What:** Three new tests:
+     - Full call lifecycle with `tool-calls` messages for `get_job`/`find_reschedule_slots`/`reschedule_job`; asserts the job moves, `job.rescheduled` event exists, and the call's action list is populated.
+     - `reschedule_job` hits a `slot_taken` error, the coordinator returns the Vapi-shaped error, and a retry via `find_reschedule_slots` succeeds.
+     - End-of-call report after a reschedule includes the rescheduled action in the event/promise trail.
+   - **Why:** Proves the whole voice stack, not just the domain, handles reschedule correctly and speaks the right results back to Vapi.
+   - **Acceptance:** New tests pass under the combined command above.
+
+5. **Re-sync the Vapi assistant after tool/prompt changes.**
+   - **Where:** `scripts/vapi-sync.ts`, `src/voice/prompt.ts`.
+   - **What:** Update the prompt's reschedule instructions to use `find_reschedule_slots`, run `pnpm vapi:sync`, and review the assistant diff.
+   - **Why:** Otherwise the new tool and tightened wording are not live on the phone number.
+   - **Acceptance:** Assistant config diff reviewed; number still routes to `/api/voice/webhook`.
+
+### Sub-agent split (parallelizable)
+
+- **Agent A:** invoice sequence migration + race test.
+- **Agent B:** `find_reschedule_slots` tool + prompt update.
+- **Agent C:** `reschedule_job` description/domain guardrail.
+- **Agent D:** webhook reschedule integration tests.
+- **Coordinator (this session):** review, run combined tests, `pnpm vapi:sync`, merge.
+
+### Risks
+
+- Adding a new tool increases prompt length; keep descriptions concise and under the existing word-count test.
+- We will not add a fully autonomous one-shot reschedule tool, because the prompt guardrail forbids moving a job without the caller explicitly confirming a specific window.

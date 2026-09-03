@@ -7,10 +7,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { addresses, calls, customerPhones, events } from "@/db/schema";
+import { addresses, calls, customerPhones, events, jobs } from "@/db/schema";
 import { newId } from "@/lib/ids";
 import { POST } from "@/app/api/voice/webhook/route";
 import { getCallByProviderId } from "@/domain/calls";
+import { bookJob } from "@/domain/jobs";
+import { makeFixture, et, type Fixture } from "@/domain/scheduling.test-utils";
 import * as fx from "./fixtures";
 import { handleVapiMessage, identificationFrom, parseToolCall, transcriptFromReport, verifyVapiSecret } from "./webhook";
 
@@ -311,5 +313,169 @@ describe("tool-calls", () => {
     const turns = transcriptFromReport(fx.endOfCallReport(c));
     expect(turns.map((t) => t.role)).toEqual(["assistant", "user", "assistant", "user"]);
     expect(turns[1].t).toBe(6);
+  });
+});
+
+describe("reschedule via webhook", () => {
+  let fixture: Fixture;
+  const EARLY = new Date("2026-09-20T00:00:00Z");
+
+  beforeAll(async () => {
+    fixture = await makeFixture("voice");
+  }, 60_000);
+
+  afterAll(async () => {
+    await fixture.cleanup();
+  });
+
+  it("happy path: get_job + reschedule_job updates the job and emits a rescheduled event", async () => {
+    const tech = fixture.byName("Tanya");
+    const booked = await bookJob(
+      {
+        customer_id: fixture.customerId,
+        address_id: fixture.addressId,
+        service_type: "diagnostic",
+        window_start: et("2026-11-02", "10:00").toISOString(),
+        employee_id: tech.id,
+        issue_summary: "No cooling upstairs",
+        caller_phone: "+13055550200",
+        now: EARLY,
+      },
+      { actor: "agent", actorId: "vapi", callId: null },
+    );
+    fixture.jobIds.add(booked.job_id);
+
+    const c = fx.call({ id: pid() });
+    await handleVapiMessage(fx.statusUpdate(c, "in-progress"));
+
+    const newStart = et("2026-11-03", "13:00").toISOString();
+    const res = await handleVapiMessage(
+      fx.toolCalls(c, [
+        { id: "tg_01", name: "get_job", args: { job_id: booked.job_id } },
+        { id: "tr_01", name: "reschedule_job", args: { job_id: booked.job_id, new_window_start: newStart, reason: "Caller prefers Tuesday afternoon" } },
+      ]),
+    );
+
+    expect(res.status).toBe(200);
+    const body = res.body as { results: Array<{ toolCallId: string; name: string; result: string }> };
+    const byId = Object.fromEntries(body.results.map((r) => [r.toolCallId, JSON.parse(r.result)]));
+    expect(byId.tg_01.ok).toBe(true);
+    expect(byId.tg_01.speech_hint).toContain("Job");
+    expect(byId.tr_01.ok).toBe(true);
+    expect(byId.tr_01.speech_hint).toMatch(/^Done\. I've moved it to /);
+
+    const row = await getCallByProviderId(c.id);
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, booked.job_id));
+    expect(job.scheduledStart?.toISOString()).toBe(newStart);
+
+    const rescheduled = await eventsFor(row!.id, "job.rescheduled");
+    expect(rescheduled).toHaveLength(1);
+    expect(rescheduled[0].entityId).toBe(booked.job_id);
+    expect(rescheduled[0].payload.reason).toBe("Caller prefers Tuesday afternoon");
+  });
+
+  it("slot-taken retry: fails, finds another slot, and succeeds", async () => {
+    const tech = fixture.byName("Tanya");
+    const booked = await bookJob(
+      {
+        customer_id: fixture.customerId,
+        address_id: fixture.addressId,
+        service_type: "diagnostic",
+        window_start: et("2026-11-04", "10:00").toISOString(),
+        employee_id: tech.id,
+        issue_summary: "Original Thursday booking",
+        now: EARLY,
+      },
+      { actor: "agent", actorId: "vapi", callId: null },
+    );
+    fixture.jobIds.add(booked.job_id);
+
+    // Block the 10 AM arrival window on Friday for the same tech.
+    const blocker = await bookJob(
+      {
+        customer_id: fixture.customerId,
+        address_id: fixture.addressId,
+        service_type: "repair",
+        window_start: et("2026-11-05", "10:00").toISOString(),
+        employee_id: tech.id,
+        issue_summary: "Blocker for retry test",
+        now: EARLY,
+      },
+      { actor: "agent", actorId: "vapi", callId: null },
+    );
+    fixture.jobIds.add(blocker.job_id);
+
+    const c = fx.call({ id: pid() });
+    await handleVapiMessage(fx.statusUpdate(c, "in-progress"));
+
+    const blockedRes = await handleVapiMessage(
+      fx.toolCalls(c, [
+        { id: "tr_fail", name: "reschedule_job", args: { job_id: booked.job_id, new_window_start: et("2026-11-05", "10:00").toISOString(), reason: "Wants Friday morning" } },
+      ]),
+    );
+    const failBody = blockedRes.body as { results: Array<{ toolCallId: string; result: string }> };
+    const failEnv = JSON.parse(failBody.results[0].result);
+    expect(failEnv.ok).toBe(false);
+    expect(failEnv.error.code).toBe("slot_taken");
+    expect(failEnv.speech_hint.length).toBeGreaterThan(10);
+
+    const availRes = await handleVapiMessage(
+      fx.toolCalls(c, [
+        { id: "tf_01", name: "find_availability", args: { from: "2026-11-05", to: "2026-11-05", service_type: "diagnostic", address_id: fixture.addressId } },
+      ]),
+    );
+    const availBody = availRes.body as { results: Array<{ toolCallId: string; result: string }> };
+    const availEnv = JSON.parse(availBody.results[0].result);
+    expect(availEnv.ok).toBe(true);
+    expect(availEnv.result.slots.length).toBeGreaterThan(0);
+    const freeSlot = availEnv.result.slots.find((s: { employee_id: string }) => s.employee_id !== tech.id) ?? availEnv.result.slots[0];
+
+    const okRes = await handleVapiMessage(
+      fx.toolCalls(c, [
+        { id: "tr_ok", name: "reschedule_job", args: { job_id: booked.job_id, new_window_start: freeSlot.window_start, employee_id: freeSlot.employee_id, reason: "Wants Friday" } },
+      ]),
+    );
+    const okBody = okRes.body as { results: Array<{ toolCallId: string; result: string }> };
+    const okEnv = JSON.parse(okBody.results[0].result);
+    expect(okEnv.ok).toBe(true);
+    expect(okEnv.speech_hint).toMatch(/^Done\. I've moved it to /);
+
+    const [job] = await db.select().from(jobs).where(eq(jobs.id, booked.job_id));
+    expect(job.scheduledStart?.toISOString()).toBe(freeSlot.window_start);
+  });
+
+  it("end-of-call report preserves the reschedule in the action trail", async () => {
+    const tech = fixture.byName("Tanya");
+    const booked = await bookJob(
+      {
+        customer_id: fixture.customerId,
+        address_id: fixture.addressId,
+        service_type: "diagnostic",
+        window_start: et("2026-11-06", "10:00").toISOString(),
+        employee_id: tech.id,
+        issue_summary: "Move on report test",
+        now: EARLY,
+      },
+      { actor: "agent", actorId: "vapi", callId: null },
+    );
+    fixture.jobIds.add(booked.job_id);
+
+    const c = fx.call({ id: pid() });
+    await handleVapiMessage(fx.statusUpdate(c, "in-progress"));
+    await handleVapiMessage(
+      fx.toolCalls(c, [
+        { id: "tr_01", name: "reschedule_job", args: { job_id: booked.job_id, new_window_start: et("2026-11-07", "10:00").toISOString(), reason: "Saturday works better" } },
+      ]),
+    );
+
+    await handleVapiMessage(fx.endOfCallReport(c, { summary: "Rescheduled a visit for the caller." }));
+
+    const row = await getCallByProviderId(c.id);
+    expect(row!.status).toBe("ended");
+    const toolNames = row!.toolCalls.map((t) => t.name);
+    expect(toolNames).toContain("reschedule_job");
+    const rescheduled = await eventsFor(row!.id, "job.rescheduled");
+    expect(rescheduled).toHaveLength(1);
+    expect(rescheduled[0].payload.job_id).toBe(booked.job_id);
   });
 });

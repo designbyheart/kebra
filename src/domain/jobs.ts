@@ -174,14 +174,10 @@ export async function appendNote(
   return { id, seq: Number(next) };
 }
 
-/** Next invoice number = max(numeric invoice numbers) + 1, serialised on an advisory lock. */
+/** Next invoice number from a Postgres sequence (race-free). */
 export async function nextInvoiceNumber(tx: Tx): Promise<string> {
-  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('kebra:invoice_number'))`);
-  const [{ next }] = await tx
-    .select({ next: sql<string>`(coalesce(max(${jobs.invoiceNumber}::int), 0) + 1)::text` })
-    .from(jobs)
-    .where(sql`${jobs.invoiceNumber} ~ '^[0-9]+$'`);
-  return String(next);
+  const [{ nextval }] = await tx.execute(sql`select nextval('public.invoice_number_seq')`);
+  return String(nextval);
 }
 
 function noteAuthor(who: WriteActor): "office" | "agent" | "system" {
@@ -420,7 +416,7 @@ export async function rescheduleJob(input: RescheduleJobInput, who: WriteActor):
       const current = primaryTech(job);
       const targetId = input.employee_id ?? current?.id;
       if (!targetId) {
-        throw new ToolError("validation", "job has no tech and none was given", "That visit doesn't have a technician yet. Let me find who's available first.");
+        throw new ToolError("validation", "job has no tech and none was given", "That visit doesn't have a technician yet. Let me find an available slot first.");
       }
       const tech = await loadTech(tx, targetId);
       if (!tech) {

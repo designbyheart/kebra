@@ -97,6 +97,7 @@ describe("system prompt", () => {
       "get_address_dossier",
       "check_warranty",
       "find_availability",
+      "find_reschedule_slots",
       "book_job",
       "reschedule_job",
       "request_cancellation",

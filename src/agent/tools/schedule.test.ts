@@ -14,7 +14,7 @@ import { tools } from "./schedule";
 import type { Slot } from "@/domain/availability";
 
 const ctx: ToolContext = { callId: null, actor: "agent", actorId: "vapi" };
-const NAMES = ["find_availability", "book_job", "reschedule_job", "request_cancellation", "add_note", "create_task"];
+const NAMES = ["find_availability", "find_reschedule_slots", "book_job", "reschedule_job", "request_cancellation", "add_note", "create_task"];
 let fx: Fixture;
 
 beforeAll(async () => {
@@ -57,6 +57,8 @@ describe("registration", () => {
     expect(registry.find_availability.input.safeParse({ from: "next tuesday", service_type: "repair" }).success).toBe(false);
     expect(registry.find_availability.input.safeParse({ from: "2026-09-03", service_type: "repair" }).success).toBe(true);
     expect(registry.find_availability.input.safeParse({ from: "2026-09-03T14:00:00-04:00", to: "2026-09-05", service_type: "repair", limit: 2 }).success).toBe(true);
+    expect(registry.find_reschedule_slots.input.safeParse({ job_id: "job_x", from: "2026-09-03" }).success).toBe(true);
+    expect(registry.find_reschedule_slots.input.safeParse({ from: "2026-09-03" }).success).toBe(false);
     expect(registry.add_note.input.safeParse({ content: "hello there" }).success).toBe(false);
     expect(registry.add_note.input.safeParse({ address_id: "adr_x", content: "hello there" }).success).toBe(true);
     expect(registry.book_job.input.safeParse({ customer_id: "c", address_id: "a", service_type: "repair", window_start: "2026-09-03T14:00:00Z", employee_id: "e", issue_summary: "no cool", caller_phone: "305-555-0142" }).success).toBe(false);
@@ -89,6 +91,49 @@ describe("find_availability tool", () => {
     expect(r.slots).toEqual([]);
     expect(r.closed_days).toEqual(["2026-10-04"]);
     expect(r.speech_hint).toMatch(/don't have anything open|don't have any openings/);
+  });
+});
+
+describe("find_reschedule_slots tool", () => {
+  it("returns slots for an existing job using its service type and current tech", async () => {
+    const avail = await run<Avail>("find_availability", { from: "2026-10-21", to: "2026-10-21", service_type: "repair", address_id: fx.addressId });
+    const slot = avail.slots[0];
+    const booked = await run<{ job_id: string }>("book_job", {
+      customer_id: fx.customerId,
+      address_id: fx.addressId,
+      service_type: "repair",
+      window_start: slot.window_start,
+      employee_id: slot.employee_id,
+      issue_summary: "Compressor short-cycling",
+      caller_phone: "+13055550177",
+    });
+    fx.jobIds.add(booked.job_id);
+
+    const r = await run<{ job_id: string; job_summary: { status: string; old_window_label: string; service_type: string; current_tech_name: string }; slots: Slot[]; closed_days: string[]; speech_hint: string }>("find_reschedule_slots", {
+      job_id: booked.job_id,
+      from: "2026-10-22",
+      to: "2026-10-22",
+    });
+    expect(r.job_id).toBe(booked.job_id);
+    expect(r.job_summary.status).toBe("scheduled");
+    expect(r.job_summary.old_window_label).toMatch(/^[A-Z][a-z]+day [A-Z][a-z]+ \d{1,2}/);
+    expect(r.job_summary.service_type).toBe("repair");
+    expect(r.job_summary.current_tech_name).toBe(slot.employee_name);
+    expect(r.slots.length).toBeGreaterThan(0);
+    expect(r.slots[0].employee_id).toBe(slot.employee_id);
+    expect(r.speech_hint).toMatch(/^I have .+ with [A-Z][a-z]+/);
+    expect(r.speech_hint).not.toMatch(/\d:\d\d/);
+  });
+
+  it("returns not_found for a missing job", async () => {
+    let caught: ToolError | null = null;
+    try {
+      await run("find_reschedule_slots", { job_id: "job_nope", from: "2026-10-22" });
+    } catch (e) {
+      caught = e as ToolError;
+    }
+    expect(caught?.code).toBe("not_found");
+    expect(caught?.speechHint).toMatch(/can't find that visit/);
   });
 });
 

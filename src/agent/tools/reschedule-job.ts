@@ -9,10 +9,10 @@ const isoInstant = z
 
 export const rescheduleJobTool = defineTool({
   description:
-    "Move an existing scheduled visit to a new window. First find the job (get_job / get_address_dossier), then call " +
-    "find_availability for the new day and pass the chosen window_start as new_window_start (and its employee_id if the " +
-    "tech changes; otherwise the current tech is kept). Give the caller's reason in one line. Only visits that are " +
-    "scheduled or awaiting scheduling can be moved; completed or in-progress visits return `invalid_state`.",
+    "Move an existing visit to a new time window. First look up the job, then call find_availability (or " +
+    "find_reschedule_slots) and pass the exact returned window_start as new_window_start. Only include employee_id " +
+    "if you want a different technician; otherwise the current technician is kept. Provide the caller's reason in one " +
+    "line. Only visits with status `scheduled` or `needs scheduling` can be moved; other statuses return `invalid_state`.",
   input: z.object({
     job_id: z.string().trim().min(1).max(64),
     new_window_start: isoInstant.describe("window_start of the new slot"),

@@ -15,6 +15,13 @@
       "when": 1788362919420,
       "tag": "0001_faithful_whiplash",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788372096673,
+      "tag": "0002_invoice_sequence",
+      "breakpoints": true
     }
   ]
 }

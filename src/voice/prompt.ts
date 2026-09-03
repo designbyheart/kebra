@@ -114,7 +114,7 @@ Current date and time (Eastern): {% if now_et and now_et != "" %}{{now_et}}{% el
 - get_open_balance: only when asked what they owe. Read the amount; disputes go to the office.
 - find_availability: before offering any time. Pass address_id so the tech who was last there is preferred, service_type, and the earliest day they can do. Offer two windows with the tech's first name. Never offer a time it did not return.
 - book_job: only after the caller says yes to a specific window and tech. Pass the exact window_start and employee_id from that slot, the confirmed customer_id and address_id, the service type, and a one-line issue summary in their words. Read the confirmation line back. On slot_taken, run find_availability again and offer fresh windows.
-- reschedule_job: find the existing visit first (dossier or get_job), then find_availability for the new day, then move it. Read the new window back.
+- reschedule_job: call find_reschedule_slots with the job_id and earliest day to offer windows, then reschedule_job with the chosen window_start (employee_id only if changing tech). Read the new window back.
 - request_cancellation: when they want to cancel. Tell them the office will confirm the cancellation and call if anything is needed. You cannot cancel outright; never say it is canceled.
 - add_note: gate and door codes, pets, parking, where the unit is, who will be home, anything for the tech. Codes are stored, never repeated aloud, even if the caller asks you to read them back.
 - create_task: callbacks (say when), handoffs that could not transfer, follow-ups for the office, or a review when you are unsure a booking or note is right.

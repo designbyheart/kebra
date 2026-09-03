@@ -190,6 +190,24 @@ describe("findAvailability", () => {
     for (const s of r.slots) expect(techIds.has(s.employee_id)).toBe(true);
   });
 
+  it("prefers the current tech and respects the job's service duration", async () => {
+    const tanya = fx.byName("Tanya");
+    const booked = await bookJob(
+      { customer_id: fx.customerId, address_id: fx.addressId, service_type: "repair", window_start: et("2026-10-26", "10:00").toISOString(), employee_id: tanya.id, issue_summary: "Reschedule source", now: EARLY },
+      AGENT,
+    );
+    fx.jobIds.add(booked.job_id);
+    const r = await findAvailability({
+      from: "2026-10-27",
+      to: "2026-10-27",
+      service_type: "repair",
+      preferred_employee_id: tanya.id,
+      now: EARLY,
+    });
+    expect(r.slots[0].employee_id).toBe(tanya.id);
+    await assertNoCollisions(r.slots, 120);
+  });
+
   it("seed sanity: today onward has 3+ diagnostic slots, none colliding with the imported schedule", async () => {
     const midnight = et("2026-09-02", "00:00");
     const r = await findAvailability({ from: "2026-09-02", service_type: "diagnostic", now: midnight });
@@ -227,7 +245,7 @@ describe("bookJob", () => {
       AGENT,
     );
     fx.jobIds.add(r.job_id);
-    expect(Number(r.invoice_number)).toBe(Number(max) + 1);
+    expect(Number(r.invoice_number)).toBeGreaterThan(Number(max));
     expect(r.window_label).toBe("Wednesday September 30, 10 AM to noon");
     expect(r.employee_name).toBe(tanya.name);
     expect(r.confirmation_line).toContain("Tanya");
@@ -308,6 +326,34 @@ describe("bookJob", () => {
     expect(evs).toHaveLength(1);
     const [k] = await db.select().from(idempotencyKeys).where(eq(idempotencyKeys.key, key));
     expect(k.tool).toBe("book_job");
+  });
+
+  it("assigns unique invoice numbers under concurrent bookings", async () => {
+    const tanya = fx.byName("Tanya");
+    const base = {
+      customer_id: fx.customerId,
+      address_id: fx.addressId,
+      service_type: "diagnostic",
+      employee_id: tanya.id,
+      issue_summary: "Concurrent booking",
+      now: EARLY,
+    };
+    const starts = Array.from({ length: 10 }, (_, i) => {
+      const day = i < 5 ? "2026-11-09" : "2026-11-10";
+      const hour = String(8 + (i % 5)).padStart(2, "0");
+      return et(day, `${hour}:00`).toISOString();
+    });
+    const results = await Promise.all(starts.map((window_start) => bookJob({ ...base, window_start }, AGENT)));
+    results.forEach((r) => fx.jobIds.add(r.job_id));
+    const invoices = results.map((r) => r.invoice_number);
+    expect(new Set(invoices).size).toBe(invoices.length);
+    for (const n of invoices) expect(n).toMatch(/^\d+$/);
+
+    // Remove these jobs immediately so later tests that look up the "latest"
+    // job at this address see only jobs created by those tests.
+    const ids = results.map((r) => r.job_id);
+    await db.delete(events).where(inArray(events.entityId, ids));
+    await db.delete(jobs).where(inArray(jobs.id, ids));
   });
 });
 
@@ -452,7 +498,8 @@ describe("cancellation requests", () => {
 describe("notes and tasks", () => {
   it("adds a job note and an address note (attached to the latest job, tagged)", async () => {
     const booked = await bookJob(
-      { customer_id: fx.customerId, address_id: fx.addressId, service_type: "estimate", window_start: et("2026-10-15", "09:00").toISOString(), employee_id: fx.byName("Sidney").id, issue_summary: "note flow", now: EARLY },
+      // Later than the concurrent-booking fixture so an address-only note still attaches here.
+      { customer_id: fx.customerId, address_id: fx.addressId, service_type: "estimate", window_start: et("2026-12-01", "09:00").toISOString(), employee_id: fx.byName("Sidney").id, issue_summary: "note flow", now: EARLY },
       AGENT,
     );
     fx.jobIds.add(booked.job_id);
