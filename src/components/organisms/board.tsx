@@ -7,6 +7,7 @@ import { SessionEndedNotice } from "@/components/molecules/session-ended-notice"
 import { useNow } from "@/hooks/use-now";
 import { useLiveEvents, type LiveEvent } from "@/lib/use-live-events";
 import { diffBoards } from "@/lib/ui/board-diff";
+import { nextFilter, type BoardFilterKey } from "@/lib/ui/board-filter";
 import { boardHref, shiftDate, todayET } from "@/lib/ui/board-layout";
 import type { BoardData, BoardJob, FetchState, Flash } from "@/lib/ui/board-types";
 import { BoardHeader } from "./board-header";
@@ -30,7 +31,13 @@ export function Board({ initial }: BoardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetRefresh, setSheetRefresh] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [chip, setChip] = useState<{ date: string; key: BoardFilterKey | null }>({ date: initial.date, key: null });
   const date = initial.date;
+
+  // Derived, not synced: a chip narrows one day, so it lapses when the day changes
+  // rather than silently hiding work on the next one.
+  const filter = (chip.date === date && chip.key) || null;
+  const setFilter = useCallback((key: BoardFilterKey | null) => setChip({ date, key }), [date]);
 
   // Clock for the "now" line: server time until hydrated, then a shared 30 s tick.
   const tick = useNow();
@@ -141,13 +148,18 @@ export function Board({ initial }: BoardProps) {
     [router],
   );
 
-  // Keyboard: ← / → switch days, t = today. Ignored while typing or with the sheet open.
+  // Keyboard: ← / → switch days, t = today, esc clears the chip filter.
+  // Ignored while typing or with the sheet open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
       if (selectedRef.current) return;
       const el = e.target as HTMLElement | null;
       if (el?.closest("input, textarea, select, [contenteditable='true'], [role='dialog']")) return;
+      if (e.key === "Escape") {
+        setFilter(null);
+        return;
+      }
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         go(shiftDate(date, -1));
@@ -161,7 +173,7 @@ export function Board({ initial }: BoardProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [date, go]);
+  }, [date, go, setFilter]);
 
   const isToday = date === todayET(now);
   const allJobs = useMemo<BoardJob[]>(() => [...data.schedule.jobs, ...data.canceled], [data.schedule.jobs, data.canceled]);
@@ -175,6 +187,8 @@ export function Board({ initial }: BoardProps) {
         speechHint={data.schedule.speech_hint}
         summary={data.schedule.summary}
         needsSchedulingTotal={data.needsScheduling.total}
+        filter={filter}
+        onFilter={(key) => setFilter(nextFilter(filter, key))}
         liveStatus={live.status}
         fetchState={fetchState}
         lastUpdate={lastUpdate}
@@ -191,6 +205,8 @@ export function Board({ initial }: BoardProps) {
         techs={data.schedule.techs}
         allTechs={data.techs}
         needsScheduling={data.needsScheduling}
+        filter={filter}
+        onClearFilter={() => setFilter(null)}
         flash={flash}
         selectedId={selectedId}
         now={now}

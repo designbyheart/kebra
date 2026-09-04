@@ -2,6 +2,7 @@ import { BoardSummaryChips } from "@/components/molecules/board-summary-chips";
 import { DateSwitcher } from "@/components/molecules/date-switcher";
 import { LiveStatusButton } from "@/components/molecules/live-status-button";
 import type { LiveStatus } from "@/lib/use-live-events";
+import type { BoardFilterKey } from "@/lib/ui/board-filter";
 import { longDateLabel } from "@/lib/ui/board-layout";
 import type { BoardData, FetchState } from "@/lib/ui/board-types";
 
@@ -11,6 +12,8 @@ export type BoardHeaderProps = {
   speechHint: string;
   summary: BoardData["schedule"]["summary"];
   needsSchedulingTotal: number;
+  filter: BoardFilterKey | null;
+  onFilter: (key: BoardFilterKey | null) => void;
   liveStatus: LiveStatus;
   fetchState: FetchState;
   lastUpdate: Date | null;
@@ -19,7 +22,7 @@ export type BoardHeaderProps = {
 };
 
 /** Board title, speech hint, live pill, day switcher and the summary chips. */
-export function BoardHeader({ date, isToday, speechHint, summary, needsSchedulingTotal, liveStatus, fetchState, lastUpdate, onRetry, onChangeDate }: BoardHeaderProps) {
+export function BoardHeader({ date, isToday, speechHint, summary, needsSchedulingTotal, filter, onFilter, liveStatus, fetchState, lastUpdate, onRetry, onChangeDate }: BoardHeaderProps) {
   const heading = (isToday && "Today") || longDateLabel(date).split(",")[0];
   return (
     <header className="flex flex-col gap-3 border-b pb-4">
@@ -36,7 +39,7 @@ export function BoardHeader({ date, isToday, speechHint, summary, needsSchedulin
           <DateSwitcher date={date} onChange={onChangeDate} />
         </div>
       </div>
-      <BoardSummaryChips summary={summary} needsSchedulingTotal={needsSchedulingTotal} />
+      <BoardSummaryChips summary={summary} needsSchedulingTotal={needsSchedulingTotal} filter={filter} onFilter={onFilter} />
     </header>
   );
 }

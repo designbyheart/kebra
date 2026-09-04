@@ -9,9 +9,37 @@ const TONE = {
   gray: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
 } as const;
 
-export type SummaryChipProps = { children: React.ReactNode; tone?: keyof typeof TONE };
+const BASE = "inline-flex h-5 items-center rounded-full px-2 font-medium tabular-nums";
 
-/** Count chip under the board title ("12 jobs", "2 in progress"). */
-export function SummaryChip({ children, tone = "neutral" }: SummaryChipProps) {
-  return <span className={cn("inline-flex h-5 items-center rounded-full px-2 font-medium tabular-nums", TONE[tone])}>{children}</span>;
+export type SummaryChipProps = {
+  children: React.ReactNode;
+  tone?: keyof typeof TONE;
+  /** When given the chip becomes a filter toggle. */
+  onClick?: () => void;
+  /** Only meaningful with `onClick`: the chip's slice is the one on screen. */
+  active?: boolean;
+  title?: string;
+};
+
+/** Count chip under the board title ("12 jobs", "2 in progress"), optionally a filter toggle. */
+export function SummaryChip({ children, tone = "neutral", onClick, active = false, title }: SummaryChipProps) {
+  if (!onClick) {
+    return <span className={cn(BASE, TONE[tone])}>{children}</span>;
+  }
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      title={title}
+      onClick={onClick}
+      className={cn(
+        BASE,
+        TONE[tone],
+        "cursor-pointer transition-shadow hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:brightness-125",
+        active && "ring-2 ring-ring ring-offset-1 ring-offset-background",
+      )}
+    >
+      {children}
+    </button>
+  );
 }
