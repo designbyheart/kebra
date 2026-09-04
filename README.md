@@ -137,6 +137,14 @@ To take a real call on your laptop, tunnel port 3000 (`cloudflared`) and pass th
 
 Railway builds the `Dockerfile` (Next standalone) per `railway.json`. Set the same env vars on the `kebra-web` service plus Railway's `DATABASE_URL`, run `db:migrate`, `import` and `db:seed-users` against it, mirror dossiers with `pnpm dossiers -- --copy-to-env RAILWAY_DATABASE_URL`, then `pnpm vapi:sync --app-url https://<your-app>`.
 
+**Deploys are CLI uploads — `git push` ships nothing.** The service has no GitHub connection (`serviceInstance.source.repo` is null), so a commit on `origin/main` changes production only once you run:
+
+```bash
+railway deployment up --service kebra-web --ci -m "<what changed>"
+```
+
+It uploads the working directory (honoring `.gitignore`), builds the Dockerfile, and swaps containers when `/api/health` passes. Check what is actually live with `railway deployment list --service kebra-web` and compare its timestamp against `git log` — production once sat one minute behind the commit that added `find_reschedule_slots`, so the tool 404'd on every call for a day while `main` looked correct.
+
 Migrating production from a laptop goes through the Postgres service's public TCP proxy, not through `kebra-web`'s own `DATABASE_URL`:
 
 ```bash
