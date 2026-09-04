@@ -62,6 +62,9 @@ Keep **Today** and **Calls** open in two tabs while you call. Full script with e
 
 ## Architecture and stack
 
+For the flows themselves — a call end to end, the tool contract, the cancellation
+lifecycle, live updates, deploy — see the diagrams in [`docs/FLOW.md`](docs/FLOW.md).
+
 | Layer | Choice |
 |---|---|
 | Voice | Vapi: free US number, assistant defined in code (`src/voice/assistant.ts`) and pushed with `pnpm vapi:sync`; Deepgram nova-3 STT, Vapi "Savannah" voice |
@@ -186,7 +189,7 @@ Total to date about **$27**, expected to stay under $40 after QA calls and the r
 
 ```
 front-desk-assignment/   the brief and the data (jsonl + csv)
-docs/                    PLAN.md (design), TOOLS.md (tool contract), EVENTS.md, QA.md, FOLLOWUPS.md, SUBMISSION.md, briefs/
+docs/                    FLOW.md (diagrams), PLAN.md (design), TOOLS.md (tool contract), EVENTS.md, QA.md, FOLLOWUPS.md, SUBMISSION.md, briefs/
 receipts/                cost receipts (README.md indexes them)
 scripts/                 import.ts, dossiers.ts, analyze-calls.ts, vapi-sync.ts
 drizzle/                 SQL migrations
