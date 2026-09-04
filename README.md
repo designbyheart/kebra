@@ -131,9 +131,25 @@ pnpm vapi:sync                # create/update the Vapi assistant and point the n
 pnpm dev                      # http://localhost:3000
 ```
 
-To take a real call on your laptop, tunnel port 3000 (`cloudflared`) and pass the URL as `--app-url` to `pnpm vapi:sync`. `pnpm test` runs the unit suite; `pnpm analyze-calls` backfills end-of-call analysis. `OFFICE_HANDOFF_NUMBER` enables the live transfer tool; without it the agent takes details and opens a handoff task.
+To take a real call on your laptop, tunnel port 3000 (`cloudflared`) and pass the URL as `--app-url` to `pnpm vapi:sync`. `pnpm test` runs the unit suite, several files of which hit the compose Postgres, so leave the container up or those suites fail; `pnpm analyze-calls` backfills end-of-call analysis. `OFFICE_HANDOFF_NUMBER` enables the live transfer tool; without it the agent takes details and opens a handoff task.
 
-**Deploy:** Railway builds the `Dockerfile` (Next standalone) per `railway.json`. Set the same env vars plus Railway's `DATABASE_URL`, run `db:migrate`, `import` and `db:seed-users` against it, mirror dossiers with `pnpm dossiers -- --copy-to-env RAILWAY_DATABASE_URL`, then `pnpm vapi:sync --app-url https://<your-app>`.
+### Deploy (Railway)
+
+Railway builds the `Dockerfile` (Next standalone) per `railway.json`. Set the same env vars on the `kebra-web` service plus Railway's `DATABASE_URL`, run `db:migrate`, `import` and `db:seed-users` against it, mirror dossiers with `pnpm dossiers -- --copy-to-env RAILWAY_DATABASE_URL`, then `pnpm vapi:sync --app-url https://<your-app>`.
+
+Migrating production from a laptop goes through the Postgres service's public TCP proxy, not through `kebra-web`'s own `DATABASE_URL`:
+
+```bash
+railway run --no-local --service Postgres -- sh -c \
+  'DATABASE_URL="postgresql://$PGUSER:$PGPASSWORD@$RAILWAY_TCP_PROXY_DOMAIN:$RAILWAY_TCP_PROXY_PORT/$PGDATABASE" pnpm db:migrate'
+```
+
+Keep the single quotes — those variables must expand inside Railway's environment, not your shell. Append `?sslmode=require` to the URL if the proxy refuses a plaintext connection. Four things bite here:
+
+- **`kebra-web`'s `DATABASE_URL` is unusable locally.** It points at `postgres.railway.internal`, which only resolves inside Railway's private network, while `railway run` executes on your machine. The lookup fails before any SQL runs and `drizzle-kit` exits 1 right after `Using 'postgres' driver for database querying` with no error printed, so the silence *is* the DNS failure. Hence the rebuilt URL above.
+- **`-p/--project` takes a project ID, not a name.** `--project kebra-front-desk` fails with `Project not found. Run 'railway link'` even when the directory is already linked, and that hint sends you chasing a link that exists. Confirm with `railway status` and omit the flag when linked.
+- **Pass `--no-local`.** This repo ships a `docker-compose.yml`, and `railway run` applies local develop overrides when one exists; the flag keeps a production migration from landing on `localhost:5433`.
+- **Nothing migrates at deploy.** The image ends in `CMD ["node", "server.js"]`, so every schema change needs the command above by hand (see `docs/FOLLOWUPS.md`).
 
 ## Costs and receipts
 

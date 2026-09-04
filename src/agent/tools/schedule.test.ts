@@ -2,7 +2,7 @@
  * W1-B tool-layer tests: registration, input schemas, and phone-ready
  * speech hints. Runs against TEST_DATABASE_URL (see scheduling.test-utils).
  */
-import { db, et, makeFixture, type Fixture } from "@/domain/scheduling.test-utils";
+import { db, et, makeFixture, seedJob, type Fixture } from "@/domain/scheduling.test-utils";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
@@ -123,6 +123,36 @@ describe("find_reschedule_slots tool", () => {
     expect(r.slots[0].employee_id).toBe(slot.employee_id);
     expect(r.speech_hint).toMatch(/^I have .+ with [A-Z][a-z]+/);
     expect(r.speech_hint).not.toMatch(/\d:\d\d/);
+  });
+
+  it("still offers windows when the job has no service type (imported jobs)", async () => {
+    // seedJob writes the imported shape: a booked window and no service type.
+    const tech = fx.byName("Felix");
+    const jobId = await seedJob(fx, { employeeIds: [tech.id], start: et("2026-10-21", "08:00"), durationMin: 120 });
+
+    const r = await run<{ job_summary: { service_type: string | null }; slots: Slot[]; speech_hint: string }>("find_reschedule_slots", {
+      job_id: jobId,
+      from: "2026-10-22",
+      to: "2026-10-22",
+    });
+    expect(r.job_summary.service_type).toBeNull();
+    expect(r.slots.length).toBeGreaterThan(0);
+    expect(r.slots[0].employee_id).toBe(tech.id);
+    expect(r.speech_hint).toMatch(/^I have .+ with [A-Z][a-z]+/);
+  });
+
+  it("sizes those windows from the existing booking, not a default", async () => {
+    // Hours are 8-18, so a full-day visit can only start by 10, a short one by 16.
+    const tech = fx.byName("Felix");
+    const long = await seedJob(fx, { employeeIds: [tech.id], start: et("2026-10-19", "08:00"), durationMin: 480 });
+    const short = await seedJob(fx, { employeeIds: [tech.id], start: et("2026-10-20", "08:00"), durationMin: 60 });
+
+    const lastStart = async (jobId: string) => {
+      const r = await run<{ slots: Slot[] }>("find_reschedule_slots", { job_id: jobId, from: "2026-10-22", to: "2026-10-22", limit: 8 });
+      return r.slots.map((s) => s.window_start).sort().at(-1)!;
+    };
+    expect(await lastStart(long)).toBe(et("2026-10-22", "10:00").toISOString());
+    expect(await lastStart(short)).toBe(et("2026-10-22", "16:00").toISOString());
   });
 
   it("returns not_found for a missing job", async () => {

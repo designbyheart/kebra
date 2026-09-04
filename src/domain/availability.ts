@@ -51,7 +51,14 @@ export type Slot = {
 export type FindAvailabilityParams = {
   from: string;
   to?: string;
-  service_type: string;
+  /** Service type key. Optional only when `duration_minutes` is given. */
+  service_type?: string;
+  /**
+   * Window length when the job has no service type on file — imported jobs
+   * carry none, so a reschedule sizes its windows from the existing booking
+   * instead (see `jobDurationMinutes`). Ignored when `service_type` is set.
+   */
+  duration_minutes?: number;
   priority?: "normal" | "high" | "emergency";
   preferred_employee_id?: string;
   address_id?: string;
@@ -355,7 +362,16 @@ export async function findAvailability(
   const maxTo = addDays(startOfDayET(from), MAX_RANGE_DAYS);
   if (to > maxTo) to = maxTo;
 
-  const service = await loadServiceType(exec, params.service_type);
+  const durationMinutes = params.service_type
+    ? (await loadServiceType(exec, params.service_type)).durationMinutes
+    : params.duration_minutes;
+  if (!durationMinutes || durationMinutes <= 0) {
+    throw new ToolError(
+      "validation",
+      "service_type or a positive duration_minutes is required",
+      "I'm not sure how long that visit needs. Is it a diagnostic, a repair, maintenance, or an estimate?",
+    );
+  }
   const hours = await loadHours(exec);
   const allTechs = await loadTechs(exec);
   if (allTechs.length === 0) return { slots: [], range: isoRange(from, to), closed_days: [] };
@@ -390,7 +406,7 @@ export async function findAvailability(
   for (let day = startOfDayET(from); day < to; day = addDays(day, 1)) {
     const dateStr = isoDateET(day);
     const row = hours.get(dowET(day));
-    const windows = windowsForDay(dateStr, row, service.durationMinutes).filter(
+    const windows = windowsForDay(dateStr, row, durationMinutes).filter(
       (w) => w.start >= from && w.start > now && w.start < to,
     );
     if (!row || row.closed) {
@@ -401,7 +417,7 @@ export async function findAvailability(
 
     const candidates: Candidate[] = [];
     for (const w of windows) {
-      const occupancy: Interval = { start: w.start, end: addMinutes(w.start, service.durationMinutes) };
+      const occupancy: Interval = { start: w.start, end: addMinutes(w.start, durationMinutes) };
       const free = allTechs.filter((t) => !(busyByTech.get(t.id) ?? []).some((b) => overlaps(b, occupancy)));
       if (free.length === 0) continue;
       const ranked = [...free].sort((a, b) => rankKey(a, dateStr) - rankKey(b, dateStr) || a.name.localeCompare(b.name));

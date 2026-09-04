@@ -3,14 +3,14 @@ import { addDays } from "date-fns";
 import { defineTool } from "@/agent/registry";
 import { ToolError } from "@/agent/errors";
 import { db } from "@/db";
-import { loadJobDetail, primaryTech, windowLabelOf } from "@/domain/jobs";
+import { jobDurationMinutes, loadJobDetail, primaryTech, windowLabelOf } from "@/domain/jobs";
 import { findAvailability, joinSpoken, spokenDay, spokenSlot } from "@/domain/availability";
 import { dateOrIso } from "./find-availability";
 
 export const findRescheduleSlotsTool = defineTool({
   description:
     "Find open arrival windows for rescheduling an existing visit. Pass the job_id and the earliest day the caller can do as `from`. " +
-    "Returns up to `limit` (default 4) two-hour windows using the job's service type and current tech. Offer two, then call " +
+    "Returns up to `limit` (default 4) two-hour windows using the job's service type (or its current booking length) and its tech. Offer two, then call " +
     "reschedule_job with the chosen window_start (and employee_id only if changing tech).",
   input: z.object({
     job_id: z.string().trim().min(1).max(64),
@@ -28,19 +28,16 @@ export const findRescheduleSlotsTool = defineTool({
         "I can't find that visit. Could you give me the address again?",
       );
     }
-    if (!job.serviceType) {
-      throw new ToolError(
-        "validation",
-        `job ${job.id} has no service type`,
-        "That visit doesn't have a service type on file, so I can't look for a window. Let me get the office to check it.",
-      );
-    }
     const currentTech = primaryTech(job);
+    // Imported jobs carry no service type, so size the windows exactly the way
+    // rescheduleJob will: the service type when there is one, otherwise the
+    // length of the booking already on the calendar.
+    const durationMinutes = await jobDurationMinutes(db, job);
     const { slots, range, closed_days } = await findAvailability(
       {
         from: input.from,
         to: input.to,
-        service_type: job.serviceType,
+        duration_minutes: durationMinutes,
         address_id: job.addressId ?? undefined,
         preferred_employee_id: currentTech?.id,
         limit: input.limit ?? 4,
